@@ -5,9 +5,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:tex_text/tex_text.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
 import '../data/models/question_model.dart';
-import '../data/services/firestore_quiz_service.dart';
+import '../data/services/firestore_exam_service.dart';
 
 class SubjectQuestionsScreen extends ConsumerWidget {
   final String subject;
@@ -69,7 +70,7 @@ class SubjectQuestionsScreen extends ConsumerWidget {
                               radius: 12,
                               backgroundColor: AppTheme.primaryColor,
                               child: Text(
-                                '${index + 1}',
+                                toBanglaNumber(index + 1),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 11,
@@ -79,21 +80,13 @@ class SubjectQuestionsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: ClipRect(
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    minHeight: 44,
-                                    maxHeight: 86,
-                                  ),
-                                  child: TexText(
-                                    q.questionText.isNotEmpty
-                                        ? q.questionText
-                                        : ' ',
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
+                              child: TexText(
+                                q.questionText.isNotEmpty
+                                    ? q.questionText
+                                    : ' ',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
@@ -150,26 +143,18 @@ class SubjectQuestionsScreen extends ConsumerWidget {
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: ClipRect(
-                                      child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          minHeight: 42,
-                                          maxHeight: 80,
-                                        ),
-                                        child: TexText(
-                                          opt.value.isNotEmpty
-                                              ? opt.value
-                                              : ' ',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: correct
-                                                ? Colors.green.shade800
-                                                : Colors.black87,
-                                            fontWeight: correct
-                                                ? FontWeight.w500
-                                                : FontWeight.normal,
-                                          ),
-                                        ),
+                                    child: TexText(
+                                      opt.value.isNotEmpty
+                                          ? opt.value
+                                          : ' ',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: correct
+                                            ? Colors.green.shade800
+                                            : Colors.black87,
+                                        fontWeight: correct
+                                            ? FontWeight.w500
+                                            : FontWeight.normal,
                                       ),
                                     ),
                                   ),
@@ -206,20 +191,12 @@ class SubjectQuestionsScreen extends ConsumerWidget {
                                     size: 18, color: Colors.blue),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: ClipRect(
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        minHeight: 38,
-                                        maxHeight: 74,
-                                      ),
-                                      child: TexText(
-                                        q.explanation!,
-                                        style:  TextStyle(
-                                          fontSize: 13,
-                                          fontFamily: GoogleFonts.googleSans().fontFamily,
-                                          color: Colors.blue,
-                                        ),
-                                      ),
+                                  child: TexText(
+                                    q.explanation!,
+                                    style:  TextStyle(
+                                      fontSize: 13,
+                                      fontFamily: GoogleFonts.googleSans().fontFamily,
+                                      color: Colors.blue,
                                     ),
                                   ),
                                 ),

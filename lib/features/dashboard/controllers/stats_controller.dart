@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -16,15 +17,20 @@ final userStatsProvider = StreamProvider<UserModel?>((ref) {
       .map((doc) => doc.exists ? UserModel.fromFirestore(doc) : null);
 });
 
-final userExamResultsProvider = StreamProvider<List<ExamResultModel>>((ref) {
+final userExamResultsProvider = FutureProvider<List<ExamResultModel>>((ref) async {
   final user = ref.watch(authStateChangesProvider).value;
-  if (user == null) return Stream.value([]);
+  if (user == null) return [];
 
-  return FirebaseFirestore.instance
-      .collection(AppConstants.examResultsCollection)
-      .where('userId', isEqualTo: user.uid)
-      .orderBy('answeredAt', descending: false)
-      .snapshots()
-      .map((snapshot) =>
-          snapshot.docs.map((doc) => ExamResultModel.fromFirestore(doc)).toList());
+  try {
+    final snapshot = await FirebaseFirestore.instance
+        .collection(AppConstants.examResultsCollection)
+        .where('userId', isEqualTo: user.uid)
+        .orderBy('answeredAt', descending: false)
+        .get();
+
+    return snapshot.docs.map((doc) => ExamResultModel.fromFirestore(doc)).toList();
+  } catch (e) {
+    debugPrint('Firestore query error (likely missing composite index): $e');
+    rethrow;
+  }
 });

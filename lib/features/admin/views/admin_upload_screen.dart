@@ -4,7 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
-import '../../exam/data/services/firestore_quiz_service.dart';
+import '../../exam/data/services/firestore_exam_service.dart';
 
 
 class AdminUploadScreen extends StatefulWidget {

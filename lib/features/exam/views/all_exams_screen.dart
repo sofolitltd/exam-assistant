@@ -7,7 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
 import '../controllers/exam_controller.dart';
 import '../data/models/exam_model.dart';
-import '../data/services/firestore_quiz_service.dart';
+import '../data/services/firestore_exam_service.dart';
 
 class _ExamWithCount {
   final ExamModel exam;
@@ -37,28 +37,31 @@ class AllExamsScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('All Exams')),
       body: ResponsiveWrapper(
         child: examsAsync.when(
-          data: (exams) {
-            if (exams.isEmpty) {
+          data: (allExams) {
+            if (allExams.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(LucideIcons.file, size: 64, color: Colors.grey[300]),
                     const SizedBox(height: 16),
-                    Text('No exams available',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                    Text(
+                      'No exams available',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    ),
                   ],
                 ),
               );
             }
             return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: exams.length,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              itemCount: allExams.length,
               itemBuilder: (context, index) {
-                final item = exams[index];
-                final exam = item.exam;
-                final questionCount = item.questionCount;
-                return _buildExamCard(context, ref, exam, questionCount);
+                final item = allExams[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildExamCard(context, ref, item.exam, item.questionCount),
+                );
               },
             );
           },

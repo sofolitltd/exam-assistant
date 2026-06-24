@@ -5,9 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tex_text/tex_text.dart';
 
+import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
 import '../controllers/exam_controller.dart';
-import '../data/services/firestore_quiz_service.dart';
+import '../data/services/firestore_exam_service.dart';
 
 class LiveExamScreen extends ConsumerStatefulWidget {
   final String examId;
@@ -21,6 +22,7 @@ class LiveExamScreen extends ConsumerStatefulWidget {
 class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
   Timer? _timer;
   bool _isLoading = true;
+  String _selectedSubject = 'All';
 
   @override
   void initState() {
@@ -98,66 +100,76 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
     final seconds = (remainingSeconds % 60).toString().padLeft(2, '0');
     final answeredCount = quizState.selectedOptions.length;
 
+    final subjects = <String>{'All'};
+    for (final q in questions) {
+      if (q.subject.isNotEmpty) subjects.add(q.subject);
+    }
+    final subjectList = subjects.toList()..sort();
+
+    final displayIndices = List<int>.generate(questions.length, (i) => i)
+        .where((i) => _selectedSubject == 'All' || questions[i].subject == _selectedSubject)
+        .toList();
+
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const SizedBox.shrink(),
-        title: SizedBox(
-          width: 800,
-          child: Row(
-            children: [
-              Text(
-                '$minutes:$seconds',
-                style: TextStyle(
-                  color: remainingSeconds < 60 ? Colors.red : Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              OutlinedButton(
-                onPressed: _finishExam,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                ),
-                child: const Text('Submit'),
-              ),
-            ],
-          ),
-        ),
-        centerTitle: true,
-        actions: const [],
+        title: Text('$minutes:$seconds ($answeredCount/${questions.length})'),
+     
+     actions: [
+      TextButton(onPressed: 
+        _finishExam
+      , child: Text('Submit', style: TextStyle(color: Colors.white),),),
+     ],
       ),
+    
       body: ResponsiveWrapper(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: LinearProgressIndicator(
-                      value: answeredCount / questions.length,
-                      backgroundColor: Colors.grey[200],
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF005C53),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20,),
+              child: LinearProgressIndicator(
+                value: questions.isEmpty ? 0 : answeredCount / questions.length,
+              ),
+            ),
+            SizedBox(
+              height: 48,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                children: subjectList.map((subject) {
+                  final isSelected = subject == _selectedSubject;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(
+                        subject,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isSelected ? Colors.white : Colors.black87,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
                       ),
+                      selected: isSelected,
+                      onSelected: (_) => setState(() => _selectedSubject = subject),
+                      selectedColor: const Color(0xFF005C53),
+                      checkmarkColor: Colors.white,
+                      backgroundColor: Colors.grey[100],
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '($answeredCount/${questions.length})',
-                    style: const TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
-                ],
+                  );
+                }).toList(),
               ),
             ),
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                itemCount: questions.length,
-                itemBuilder: (context, index) {
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                itemCount: displayIndices.length,
+                itemBuilder: (context, i) {
+                  final index = displayIndices[i];
                   final question = questions[index];
                   final selected = quizState.selectedOptions[index];
                   final hasOptions = question.options.isNotEmpty;
@@ -182,7 +194,7 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
                                     ? const Color(0xFF005C53)
                                     : Colors.grey[300],
                                 child: Text(
-                                  '${index + 1}',
+                                  toBanglaNumber(index + 1),
                                   style: TextStyle(
                                     color: selected != null
                                         ? Colors.white

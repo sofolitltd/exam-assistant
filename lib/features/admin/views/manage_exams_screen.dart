@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/responsive_wrapper.dart';
 import '../../exam/data/models/exam_model.dart';
-import '../../exam/data/services/firestore_quiz_service.dart';
+import '../../exam/data/services/firestore_exam_service.dart';
 
 class ManageExamsScreen extends StatefulWidget {
   const ManageExamsScreen({super.key});

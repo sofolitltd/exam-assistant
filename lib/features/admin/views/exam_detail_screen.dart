@@ -9,7 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
 import '../../exam/data/models/exam_model.dart';
 import '../../exam/data/models/question_model.dart';
-import '../../exam/data/services/firestore_quiz_service.dart';
+import '../../exam/data/services/firestore_exam_service.dart';
 
 const _subjectOptions = [
   'General', 'Bangla', 'English', 'Mathematics', 'Science',

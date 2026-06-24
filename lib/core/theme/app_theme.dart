@@ -49,6 +49,10 @@ class AppTheme {
           color: Colors.white,
         ),
       ),
+      cardTheme: CardThemeData(
+        color: Colors.white,
+        margin: .zero,
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tex_text/tex_text.dart';
 
+import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../dashboard/controllers/stats_controller.dart';
 import '../controllers/exam_controller.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
@@ -15,6 +18,7 @@ class ResultScreen extends ConsumerStatefulWidget {
 
 class _ResultScreenState extends ConsumerState<ResultScreen> {
   bool _saved = false;
+  String _selectedSubject = 'All';
 
   @override
   void initState() {
@@ -57,6 +61,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
             wrongCount: wrong,
             skippedCount: skipped,
           );
+      ref.invalidate(userExamResultsProvider);
       _saved = true;
     } catch (_) {}
   }
@@ -86,24 +91,26 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
       }
     }
 
-    final double totalScore =
-        correct - (wrong * exam.negativeMarks).toDouble();
+    final double totalNegative = wrong * exam.negativeMarks;
+    final double totalScore = correct - totalNegative;
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) context.go('/home');
-      },
-      child: Scaffold(
+    final timeTakenSeconds = exam.durationSeconds - quizState.remainingSeconds;
+    final minutes = timeTakenSeconds ~/ 60;
+    final seconds = timeTakenSeconds % 60;
+
+    final subjects = <String>{'All'};
+    for (final q in questions) {
+      if (q.subject.isNotEmpty) subjects.add(q.subject);
+    }
+    final subjectList = subjects.toList()..sort();
+
+    final displayQuestions = _selectedSubject == 'All'
+        ? questions
+        : questions.where((q) => q.subject == _selectedSubject).toList();
+
+    return Scaffold(
       appBar: AppBar(
         title: const Text('Exam Result'),
-        automaticallyImplyLeading: false,
-        actions: [
-          TextButton(
-            onPressed: () => context.go('/home'),
-            child: const Text('Back'),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: ResponsiveWrapper(
@@ -134,17 +141,78 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _statItem(
-                        'Correct', correct.toString(), Colors.green),
-                    _statItem(
-                        'Incorrect', wrong.toString(), Colors.red),
-                    _statItem(
-                        'Skipped', skipped.toString(), Colors.grey),
-                  ],
+                const SizedBox(height: 24),
+                Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.bar_chart, size: 20, color: Color(0xFF005C53)),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Score Breakdown',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 20),
+                        _detailRow('Correct', correct.toString(), Colors.green, Icons.check_circle),
+                        const SizedBox(height: 8),
+                        _detailRow('Incorrect', wrong.toString(), Colors.red, Icons.cancel),
+                        const SizedBox(height: 8),
+                        _detailRow(
+                          'Total Attempt',
+                          (correct + wrong).toString(),
+                          Colors.indigo,
+                          Icons.arrow_forward,
+                        ),
+                        const SizedBox(height: 8),
+                        _detailRow('Skipped', skipped.toString(), Colors.grey, Icons.remove_circle_outline),
+                        const SizedBox(height: 8),
+                        _detailRow(
+                          'Negative',
+                          '-${totalNegative.toStringAsFixed(2)}',
+                          Colors.orange,
+                          Icons.do_not_disturb_alt,
+                        ),
+                        const SizedBox(height: 8),
+                        _detailRow(
+                          'Time Taken',
+                          '${minutes}m ${seconds}s',
+                          Colors.blue,
+                          Icons.timer_outlined,
+                        ),
+                        const Divider(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total Score',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Color(0xFF005C53),
+                              ),
+                            ),
+                            Text(
+                              totalScore.toStringAsFixed(2),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                                color: Color(0xFF005C53),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 40),
                 const Align(
@@ -156,12 +224,47 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                SizedBox(
+                  height: 48,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    children: subjectList.map((subject) {
+                      final isSelected = subject == _selectedSubject;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(
+                            subject,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isSelected ? Colors.white : Colors.black87,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            ),
+                          ),
+                          selected: isSelected,
+                          onSelected: (_) => setState(() => _selectedSubject = subject),
+                          selectedColor: const Color(0xFF005C53),
+                          checkmarkColor: Colors.white,
+                          backgroundColor: Colors.grey[100],
+                          side: BorderSide.none,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: questions.length,
+                  itemCount: displayQuestions.length,
                   itemBuilder: (context, index) {
-                    final question = questions[index];
+                    final question = displayQuestions[index];
                     final selected =
                         quizState.selectedOptions[index];
                     final isCorrect = selected != null &&
@@ -190,15 +293,15 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                                 CircleAvatar(
                                   radius: 12,
                                   backgroundColor: selected == null
-                                      ? Colors.transparent
+                                      ? Colors.grey[300]
                                       : (isCorrect
                                           ? Colors.green
                                           : Colors.red),
                                   child: Text(
-                                    '${index + 1}',
+                                    toBanglaNumber(index + 1),
                                     style: TextStyle(
                                       color: selected == null
-                                          ? Colors.grey[600]
+                                          ? Colors.black54
                                           : Colors.white,
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -207,7 +310,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: Text(
+                                  child: TexText(
                                     qText,
                                     style: const TextStyle(
                                       fontSize: 15,
@@ -215,24 +318,6 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                                     ),
                                   ),
                                 ),
-                                if (hasExplanation)
-                                  IconButton(
-                                    icon: const Icon(Icons.info_outline,
-                                        size: 20),
-                                    onPressed: () => showDialog(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: const Text('Explanation'),
-                                        content: Text(question.explanation!),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(ctx),
-                                            child: const Text('Close'),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
                               ],
                             ),
                             if (hasOptions) ...[
@@ -331,7 +416,7 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
-                                          child: Text(
+                                          child: TexText(
                                             option.value.isNotEmpty
                                                 ? option.value
                                                 : ' ',
@@ -383,6 +468,33 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
                                 );
                               }),
                             ],
+                            if (hasExplanation) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.lightbulb_outline,
+                                        size: 18, color: Colors.blue),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: TexText(
+                                        question.explanation!,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -399,24 +511,24 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           ),
         ),
       ),
-      ),
     );
   }
 
-  Widget _statItem(
-      String label, String value, Color color) {
-    return Column(
+  Widget _detailRow(String label, String value, Color color, IconData icon) {
+    return Row(
       children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 14, color: Colors.black87)),
+        const Spacer(),
         Text(
           value,
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 14,
             fontWeight: FontWeight.bold,
             color: color,
           ),
         ),
-        Text(label,
-            style: const TextStyle(color: Colors.grey)),
       ],
     );
   }

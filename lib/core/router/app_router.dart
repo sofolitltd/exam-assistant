@@ -15,7 +15,7 @@ import '../../features/dashboard/views/main_navigation_hub.dart';
 import '../../features/dashboard/views/profile_view.dart';
 import '../../features/notices/views/notices_screen.dart';
 import '../../features/exam/views/all_exams_screen.dart';
-import '../../features/exam/views/exam_list_screen.dart';
+import '../../features/exam/views/home_screen.dart';
 import '../../features/exam/views/live_exam_screen.dart';
 import '../../features/exam/views/result_screen.dart';
 import '../../features/exam/views/subject_questions_screen.dart';
@@ -92,8 +92,11 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/exam/:examId',
-      builder: (context, state) => LiveExamScreen(
-        examId: state.pathParameters['examId']!,
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: LiveExamScreen(
+          examId: state.pathParameters['examId']!,
+        ),
       ),
     ),
     GoRoute(
