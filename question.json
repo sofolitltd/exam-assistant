@@ -1,0 +1,1176 @@
+
+[
+  {
+    "questionText": "উপসর্গ কোন জাতীয় শব্দাংশ?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "উপসর্গ হলো এমন কিছু অব্যয়সূচক শব্দাংশ যা স্বাধীনভাবে কোনো বাক্যে ব্যবহৃত হতে পারে না। এগুলো অন্য শব্দের পূর্বে বসে নতুন শব্দ গঠন করে এবং অর্থের পরিবর্তন ঘটায়।",
+    "options": [
+      {"key": "ক", "value": "विशेष্য"},
+      {"key": "খ", "value": "সর্বনাম"},
+      {"key": "গ", "value": "বিশেষণ"},
+      {"key": "ঘ", "value": "অব্যয়"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "উপসর্গের কাজ কী?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "উপসর্গের প্রধান কাজ হলো ধাতু বা শব্দের পূর্বে বসে নতুন অর্থবোধক শব্দ গঠন করা, অর্থের পূর্ণতা দান করা এবং অর্থের সম্প্রসারণ বা সংকোচন ঘটানো।",
+    "options": [
+      {"key": "ক", "value": "বর্ণ সংরক্ষণ"},
+      {"key": "খ", "value": "যতি সংস্থাপন"},
+      {"key": "গ", "value": "ভাবের পার্থক্য নিরুপন"},
+      {"key": "ঘ", "value": "নতুন শব্দ গঠন"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "উপসর্গের সঙ্গে প্রত্যয়ের পার্থক্য?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "ব্যাকরণগত নিয়ম অনুযায়ী, উপসর্গ সর্বদা মূল শব্দ বা ধাতুর পূর্বে (সামনে) বসে, আর প্রত্যয় সর্বদা শব্দ বা ধাতুর পরে (পিছনে) যুক্ত হয়।",
+    "options": [
+      {"key": "ক", "value": "অব্যয় ও শব্দাংশ"},
+      {"key": "খ", "value": "উপসর্গ থাকে সামনে ,প্রত্যয় থাকে পিছনে"},
+      {"key": "গ", "value": "ভিন্ন অর্থ প্রকাশ"},
+      {"key": "ঘ", "value": "নতুন শব্দ গঠন"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "বাংলা ভাষায় কয়টি খাঁটি বাংলা উপসর্গ আছে?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "বাংলা ভাষায় খাঁটি বাংলা উপসর্গ মোট ২১টি (অ, অঘা, অজ, অনা, আ, আড়, আন, আব, ইতি, উন, কদ, কু, নি, পাতি, বি, ভর, রাম, স, সু, হা, জো)। অন্যদিকে তৎসম বা সংস্কৃত উপসর্গ ২০টি।",
+    "options": [
+      {"key": "ক", "value": "উনিশ"},
+      {"key": "খ", "value": "কুড়ি"},
+      {"key": "গ", "value": "একুশ"},
+      {"key": "ঘ", "value": "বাইশ"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "কোনটি বাংলা উপসর্গ?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "'অনা' হলো একটি খাঁটি বাংলা উপসর্গ। 'পরা' ও 'প্রতি' হলো তৎসম বা সংস্কৃত উপসর্গ এবং 'হর' একটি ফারসি বা বিদেশি উপসর্গ।",
+    "options": [
+      {"key": "ক", "value": "পরা"},
+      {"key": "খ", "value": "প্রতি"},
+      {"key": "গ", "value": "হর"},
+      {"key": "ঘ", "value": "অনা"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "অচিন শব্দের অ উপসর্গটি কোন অর্থে ব্যবহৃত?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "'অচিন' শব্দে 'অ' উপসর্গটি নঞর্থক বা না-বোধক অর্থে ব্যবহৃত হয়েছে, যার অর্থ যা চেনা নয় বা চেনার অভাব।",
+    "options": [
+      {"key": "ক", "value": "নেতিবাচক"},
+      {"key": "খ", "value": "বিয়োগান্তক"},
+      {"key": "গ", "value": "নঞর্থক"},
+      {"key": "ঘ", "value": "অজানা"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "কোন শব্দ গঠনে বাংলা উপসর্গ ব্যবহৃত হয়েছে?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "'অনাবৃষ্টি' শব্দটিতে খাঁটি বাংলা উপসর্গ 'অনা' ব্যবহৃত হয়েছে। বাকি অপশনগুলোর 'পরা', 'অভি' এবং 'পরি' হলো তৎসম বা সংস্কৃত উপসর্গ।",
+    "options": [
+      {"key": "ক", "value": "পরাকাষ্ঠা"},
+      {"key": "খ", "value": "অভিব্যাক্তি"},
+      {"key": "গ", "value": "পরিশ্রান্ত"},
+      {"key": "ঘ", "value": "অনাবৃষ্টি"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "প্র, পরা অপ-",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "প্র, পরা, অপ, সম, নি, অব—এগুলো বাংলা ব্যাকরণের সংস্কৃত বা তৎসম উপসর্গ। সংস্কৃতে মোট ২০টি উপসর্গ রয়েছে যা বাংলা ভাষায় হুবহু ব্যবহৃত হয়।",
+    "options": [
+      {"key": "ক", "value": "বাংলা উপসর্গ"},
+      {"key": "খ", "value": "সংস্কৃত উপসর্গ"},
+      {"key": "গ", "value": "বিদেশি উপসর্গ"},
+      {"key": "ঘ", "value": "উপসর্গ স্থানীয় অব্যয়"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "উপসর্গ কোনটি?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "'অতি' হলো একটি তৎসম উপসর্গ (যেমন: অতিশয়, অতিক্রম)। অন্যদিকে 'থেকে', 'চেয়ে', 'দ্বারা' শব্দগুলো বাংলা ব্যাকরণে অনুসর্গ বা কর্মপ্রবচনীয় হিসেবে ব্যবহৃত হয়।",
+    "options": [
+      {"key": "ক", "value": "অতি"},
+      {"key": "খ", "value": "থেকে"},
+      {"key": "গ", "value": "চেয়ে"},
+      {"key": "ঘ", "value": "দ্বারা"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "নিচের কোনটি তৎসম উপসর্গ?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "'প্র' হলো ২০টি সংস্কৃত বা তৎসম উপসর্গের অন্যতম একটি। বাকি অপশনগুলোর 'গর' (আরবি), 'বে' (ফারসি) এবং 'লা' (আরবি) হলো বিদেশি উপসর্গ।",
+    "options": [
+      {"key": "ক", "value": "প্র"},
+      {"key": "খ", "value": "গর"},
+      {"key": "গ", "value": "বে"},
+      {"key": "ঘ", "value": "লা"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "উপসর্গজাত শব্দ কোনটি?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "'অপিচ' শব্দটিতে তৎসম উপসর্গ 'অপি' যুক্ত রয়েছে (অপি + চ), যা একটি উপসর্গজাত শব্দ।",
+    "options": [
+      {"key": "ক", "value": "অপিচ"},
+      {"key": "খ", "value": "অধীত"},
+      {"key": "গ", "value": "অজিন"},
+      {"key": "ঘ", "value": "অগ্নীজ"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "কোনটি উপসর্গ নিষ্পন্ন শব্দ?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "'অভিমুখ' শব্দে তৎসম বা সংস্কৃত উপসর্গ 'অভি' যুক্ত হয়ে শব্দ গঠিত হয়েছে (অভি + মুখ)। 'চৌরাস্তা' শব্দটিতে 'চৌ' হলো তদ্ধিত প্রত্যয় বা সমাস নিষ্পন্ন রূপ।",
+    "options": [
+      {"key": "ক", "value": "বড়াই"},
+      {"key": "খ", "value": "অভিমুখ"},
+      {"key": "গ", "value": "ছাত্রকে"},
+      {"key": "ঘ", "value": "চৌরাস্তা"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "কোন শব্দে বিদেশি উপসর্গ ব্যবহৃত হয়েছে?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "'নিমরাজি' শব্দে ফারসি বা বিদেশি উপসর্গ 'নিম' ব্যবহৃত হয়েছে, যার অর্থ আধা বা অর্ধেক। 'নিখুঁত' শব্দে 'নি' হলো খাঁটি বাংলা উপসর্গ।",
+    "options": [
+      {"key": "ক", "value": "নিখুঁত"},
+      {"key": "খ", "value": "আনমনা"},
+      {"key": "গ", "value": "অবহেলা"},
+      {"key": "ঘ", "value": "নিমরাজি"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "বিপরীতার্থে পরা উপসর্গ যুক্ত শব্দ কোনটি?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "'পরাভাব' শব্দের অর্থ পরাজয় বা নাশ, যা মূল 'ভাব' বা অস্তিত্বের বিপরীত অর্থ প্রকাশে 'পরা' উপসর্গ ধারণ করেছে।",
+    "options": [
+      {"key": "ক", "value": "পরাকাষ্ঠা"},
+      {"key": "খ", "value": "পরাক্রান্ত"},
+      {"key": "গ", "value": "পরায়ন"},
+      {"key": "ঘ", "value": "পরাভাব"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "কোন রাজবংশের আমলে চর্যাপদ শুরু হয়?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "বাংলা সাহিত্যের প্রাচীন যুগের একমাত্র নিদর্শন 'চর্যাপদ' পাল রাজবংশের আমলে (বিশেষত অষ্টম থেকে দ্বাদশ শতাব্দী) রচিত ও শুরু হয়। পাল রাজারা বৌদ্ধ ধর্মাবলম্বী ছিলেন এবং চর্যাপদের রচয়িতারাও ছিলেন বৌদ্ধ সহজিয়া।",
+    "options": [
+      {"key": "ক", "value": "পাল"},
+      {"key": "খ", "value": "সেন"},
+      {"key": "গ", "value": "মুঘল"},
+      {"key": "ঘ", "value": "তুর্কি"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "বাংলা ভাষার জন্ম কোন ভাষা থেকে?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "ভাষাতাত্ত্বিক ড. মুহম্মদ শহীদুল্লাহর মতে গৌড়ী প্রাকৃত এবং ড. সুনীতিকুমার চট্টোপাধ্যায়ের মতে মাগধী প্রাকৃত ভাষা থেকে অপভ্রংশের মাধ্যমে বাংলা ভাষার উৎপত্তি হয়েছে। অর্থাৎ এর প্রত্যক্ষ উৎস 'প্রাকৃত' ভাষা।",
+    "options": [
+      {"key": "ক", "value": "সংস্কৃত"},
+      {"key": "খ", "value": "পালি"},
+      {"key": "গ", "value": "প্রাকৃত"},
+      {"key": "ঘ", "value": "অপভ্রংশ"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "বাঙালি উপভাষা অঞ্চল কোনটি?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "বরিশাল, ঢাকা, খুলনা, ময়মনসিংহ, ফরিদপুর প্রভৃতি অঞ্চলসমূহ 'বঙ্গালী' বা বাঙালি উপভাষা অঞ্চলের অন্তর্ভুক্ত। অন্যদিকে নদীয়া অঞ্চলটি 'রাঢ়ী' উপভাষার অন্তর্ভুক্ত।",
+    "options": [
+      {"key": "ক", "value": "নদীয়া"},
+      {"key": "খ", "value": "ত্রিপুরা"},
+      {"key": "গ", "value": "পুরুলিয়া"},
+      {"key": "ঘ", "value": "বরিশাল"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "কোন শাসনামলে বাংলা লিপির স্থায়ী রূপ তৈরি করে অক্ষর গঠনের কাজ শুরু হয়?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "পাল শাসনামলে বা পাল যুগে আদি-বাংলা লিপি থেকে প্রথম স্থায়ী রূপের ভিত্তিপ্রস্তর স্থাপিত হয় এবং সেন আমলে এসে এটি আরও সুনির্দিষ্ট রূপ লাভ করে।",
+    "options": [
+      {"key": "ক", "value": "সেন যুগ"},
+      {"key": "খ", "value": "পাঠান যুগ"},
+      {"key": "গ", "value": "পাল যুগ"},
+      {"key": "ঘ", "value": "মোগল যুগ"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "বাংলা সাহিত্যের যুগকে কয়ভাগে ভাগ করা যায়?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "বাংলা সাহিত্যের ইতিহাসকে প্রধানত তিনটি যুগে ভাগ করা হয়: প্রাচীন যুগ (৬৫০-১২০০ খ্রি.), মধ্যযুগ (১২০১-১৮০০ খ্রি.), এবং আধুনিক যুগ (১৮০১ খ্রি. থেকে বর্তমান)।",
+    "options": [
+      {"key": "ক", "value": "৪ টি"},
+      {"key": "খ", "value": "৩টি"},
+      {"key": "গ", "value": "৫টি"},
+      {"key": "ঘ", "value": "৬টি"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "চর্যাপদে কোন ধর্মমতের কথা আছে?",
+    "subject": "Bangla",
+    "source": [],
+    "explanation": "চর্যাপদ মূলত তান্ত্রিক বৌদ্ধ সহজিয়া সিদ্ধাচার্যদের সাধন-সংগীত ও কবিতা। এতে বৌদ্ধ সহজযান বা বৌদ্ধ ধর্মমতের গুহ্য সাধনাতত্ত্ব রূপকের মাধ্যমে প্রকাশ পেয়েছে।",
+    "options": [
+      {"key": "ক", "value": "খ্রিষ্টধর্ম"},
+      {"key": "খ", "value": "প্যাগনিজম"},
+      {"key": "গ", "value": "জৈনধর্ম"},
+      {"key": "ঘ", "value": "বৌদ্ধধর্ম"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "Goodwill (সুনাম) কোন part of speech?",
+    "subject": "English",
+    "source": [],
+    "explanation": "The word 'Goodwill' means a friendly, helpful, or cooperative feeling, or the established reputation of a business, which acts as a Noun.",
+    "options": [
+      {"key": "ক", "value": "Pronoun"},
+      {"key": "খ", "value": "Noun"},
+      {"key": "গ", "value": "verb"},
+      {"key": "ঘ", "value": "adverb"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "Which of the following words can be used as a verb?",
+    "subject": "English",
+    "source": [],
+    "explanation": "The word 'Master' can be used as both a noun (a person who has dominance) and a verb meaning to acquire complete knowledge or command over something.",
+    "options": [
+      {"key": "ক", "value": "Mister"},
+      {"key": "খ", "value": "Mistress"},
+      {"key": "গ", "value": "Master"},
+      {"key": "ঘ", "value": "Mastery"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "Which one is the verb?",
+    "subject": "English",
+    "source": [],
+    "explanation": "'Reopen' is a verb meaning to open again. 'Openly' and 'Closely' are adverbs, while 'Openness' is a noun.",
+    "options": [
+      {"key": "ক", "value": "Openly"},
+      {"key": "খ", "value": "Reopen"},
+      {"key": "গ", "value": "Openness"},
+      {"key": "ঘ", "value": "Closely"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "Which one is noun?",
+    "subject": "English",
+    "source": [],
+    "explanation": "'Nostalgia' is an abstract noun denoting a sentimental longing or wistful affection for a period in the past. 'Nostalgic' is its adjective form.",
+    "options": [
+      {"key": "ক", "value": "nostalgic"},
+      {"key": "খ", "value": "nostalgical"},
+      {"key": "গ", "value": "nostalgia"},
+      {"key": "ঘ", "value": "nostalgica"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "Differentiate is -",
+    "subject": "English",
+    "source": [],
+    "explanation": "Words ending with the suffix '-ate' are commonly verbs. 'Differentiate' means to recognize or identify the differences between things.",
+    "options": [
+      {"key": "ক", "value": "noun"},
+      {"key": "খ", "value": "adjective"},
+      {"key": "গ", "value": "adverb"},
+      {"key": "ঘ", "value": "verb"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "Hopeful is a/an –",
+    "subject": "English",
+    "source": [],
+    "explanation": "The suffix '-ful' converts a noun into an adjective. 'Hopeful' is an adjective meaning feeling or inspiring optimism.",
+    "options": [
+      {"key": "ক", "value": "Verb"},
+      {"key": "খ", "value": "Noun"},
+      {"key": "গ", "value": "Adjective"},
+      {"key": "ঘ", "value": "Adverb"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "Frequency is –",
+    "subject": "English",
+    "source": [],
+    "explanation": "Words ending with the suffix '-cy' (such as agency, frequency) function as abstract nouns. 'Frequent' is its adjective form.",
+    "options": [
+      {"key": "ক", "value": "an adjective"},
+      {"key": "খ", "value": "a verb"},
+      {"key": "গ", "value": "a noun"},
+      {"key": "ঘ", "value": "a Preposition"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "Advice is a –",
+    "subject": "English",
+    "source": [],
+    "explanation": "'Advice' with a 'c' is an uncountable noun meaning guidance. The spelling with an 's' ('advise') functions as the verb form.",
+    "options": [
+      {"key": "ক", "value": "verb"},
+      {"key": "খ", "value": "Noun"},
+      {"key": "গ", "value": "adjective"},
+      {"key": "ঘ", "value": "proverb"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "The word diabetic is –",
+    "subject": "English",
+    "source": [],
+    "explanation": "The word 'diabetic' can be used as a noun (referring to a person who has diabetes) as well as an adjective (relating to or suffering from diabetes).",
+    "options": [
+      {"key": "ক", "value": "a noun adjective"},
+      {"key": "খ", "value": "an adjective"},
+      {"key": "গ", "value": "a noun"},
+      {"key": "ঘ", "value": "both a noun and an adjective"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "What is verb of able?",
+    "subject": "English",
+    "source": [],
+    "explanation": "By adding the prefix 'en-' to the adjective 'able', it converts into the verb form 'enable', which means to make someone or something able to do a task.",
+    "options": [
+      {"key": "ক", "value": "ability"},
+      {"key": "খ", "value": "enable"},
+      {"key": "গ", "value": "able"},
+      {"key": "ঘ", "value": "disable"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "Accept শব্দটির Noun হচ্ছে?",
+    "subject": "English",
+    "source": [],
+    "explanation": "The verb 'Accept' takes the nominal suffix '-ance' to form its noun counterpart, 'Acceptance'. 'Acceptable' is an adjective.",
+    "options": [
+      {"key": "ক", "value": "Acceptance"},
+      {"key": "খ", "value": "Accepted"},
+      {"key": "গ", "value": "Acception"},
+      {"key": "ঘ", "value": "Acceptable"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "Which one is the noun of the word brief?",
+    "subject": "English",
+    "source": [],
+    "explanation": "'Brevity' is the abstract noun form of 'brief', meaning concise or exact use of words in writing or speech.",
+    "options": [
+      {"key": "ক", "value": "Brevity"},
+      {"key": "খ", "value": "short"},
+      {"key": "গ", "value": "Briefly"},
+      {"key": "ঘ", "value": "Briefing"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "Bitter শব্দটির verb হচ্ছে?",
+    "subject": "English",
+    "source": [],
+    "explanation": "The prefix 'em-' is added to 'bitter' to build the verb form 'Embitter', which means to cause someone to feel bitter or resentful.",
+    "options": [
+      {"key": "ক", "value": "Bitter"},
+      {"key": "খ", "value": "bitterness"},
+      {"key": "গ", "value": "Embitter"},
+      {"key": "ঘ", "value": "Bitterify"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "Adjective of circle is –",
+    "subject": "English",
+    "source": [],
+    "explanation": "The adjective form of the noun 'circle' is 'circular', meaning having the form of a circle or round.",
+    "options": [
+      {"key": "ক", "value": "Encircle"},
+      {"key": "খ", "value": "circular"},
+      {"key": "গ", "value": "circuler"},
+      {"key": "ঘ", "value": "circle"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "Compel শব্দটির Noun হচ্ছে?",
+    "subject": "English",
+    "source": [],
+    "explanation": "The verb 'Compel' shifts its ending to form the abstract noun 'compulsion', meaning the state of being forced or driven to do something.",
+    "options": [
+      {"key": "ক", "value": "Compelness"},
+      {"key": "খ", "value": "compulsion"},
+      {"key": "গ", "value": "Tranquil"},
+      {"key": "ঘ", "value": "compelled"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "The adjective form of decision is –",
+    "subject": "English",
+    "source": [],
+    "explanation": "The noun 'decision' changes to the adjective 'decisive' using the suffix '-ive'. It means settling an issue or producing a definite result.",
+    "options": [
+      {"key": "ক", "value": "decisive"},
+      {"key": "খ", "value": "deceived"},
+      {"key": "গ", "value": "decide"},
+      {"key": "ঘ", "value": "decisiveness"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "The verb of the word economy is –",
+    "subject": "English",
+    "source": [],
+    "explanation": "The word 'economize' (ending with '-ize') is the verb form of 'economy', meaning to spend less or reduce expenses selectively.",
+    "options": [
+      {"key": "ক", "value": "economic"},
+      {"key": "খ", "value": "economical"},
+      {"key": "গ", "value": "economically"},
+      {"key": "ঘ", "value": "economize"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "Adjective of the word float is –",
+    "subject": "English",
+    "source": [],
+    "explanation": "'Floating' acts as a participle adjective derived from the verb 'float', denoting something suspended or moving on a fluid surface.",
+    "options": [
+      {"key": "ক", "value": "Floaty"},
+      {"key": "খ", "value": "Floating"},
+      {"key": "গ", "value": "Fleet"},
+      {"key": "ঘ", "value": "None of them"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "What is the adjective of the word \"Heart\"?",
+    "subject": "English",
+    "source": [],
+    "explanation": "The present participle form 'heartening' functions as an adjective meaning cheerful or encouraging. Note that 'hearty' is also a common adjective, but among options, 'heartening' is the grammatically appropriate selection.",
+    "options": [
+      {"key": "ক", "value": "heart"},
+      {"key": "খ", "value": "hearten"},
+      {"key": "গ", "value": "heartening"},
+      {"key": "ঘ", "value": "heartful"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "The adjective of the word people is?",
+    "subject": "English",
+    "source": [],
+    "explanation": "The word 'populous' is the valid adjective form of the noun 'people/population', meaning having a large population or densely populated.",
+    "options": [
+      {"key": "ক", "value": "popularity"},
+      {"key": "খ", "value": "popularly"},
+      {"key": "গ", "value": "popularize"},
+      {"key": "ঘ", "value": "populous"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "বাংলাদেশকে স্বীকৃতি প্রদানকারী প্রথম ইউরোপীয় দেশ কোনটি?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "মুক্তিযুদ্ধ চলাকালীন বা পরবর্তী সময়ে ইউরোপের দেশগুলোর মধ্যে 'পূর্ব জার্মানি' (East Germany) সর্বপ্রথম ১১ জানুয়ারি ১৯৭২ সালে স্বাধীন বাংলাদেশকে রাষ্ট্রীয় স্বীকৃতি প্রদান করে।",
+    "options": [
+      {"key": "ক", "value": "যুক্তরাজ্য"},
+      {"key": "খ", "value": "পূর্ব জার্মানি"},
+      {"key": "গ", "value": "স্পেন"},
+      {"key": "ঘ", "value": "গ্রিস"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "ফ্রান্স বাংলাদেশকে স্বীকৃতি দেয় কবে?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "ইউরোপীয় পরাশক্তি ফ্রান্স ১৯৭২ সালের ১৪ই ফেব্রুয়ারি তারিখে স্বাধীন ও সার্বভৌম রাষ্ট্র হিসেবে গণপ্রজাতন্ত্রী বাংলাদেশকে আনুষ্ঠানিক স্বীকৃতিপত্র দেয়।",
+    "options": [
+      {"key": "ক", "value": "১২ ফেব্রুয়ারি, ১৯৭২"},
+      {"key": "খ", "value": "১৩ ফেব্রুয়ারি ১৯৭২"},
+      {"key": "গ", "value": "১৫ ফেব্রুয়ারি, ১৯৭২"},
+      {"key": "ঘ", "value": "১৪ ফেব্রুয়ারি, ১৯৭২"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "ফারাক্কা বাঁধ তৈরি করা হয়েছে কোন নদীর উপর?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "ভারতের পশ্চিমবঙ্গ রাজ্যের মুর্শিদাবাদ জেলায় অবস্থিত ফারাক্কা বাঁধটি মূলত গঙ্গা নদীর প্রবাহ নিয়ন্ত্রণের উদ্দেশ্যে ভারতের গঙ্গা নদীর উপর তৈরি করা হয়েছে।",
+    "options": [
+      {"key": "ক", "value": "মেঘনা"},
+      {"key": "খ", "value": "পদ্মা"},
+      {"key": "গ", "value": "যমুনা"},
+      {"key": "ঘ", "value": "গঙ্গা"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "বাংলাদেশ ও ভারতের মধ্যে সম্পাদিত গঙ্গার পানি বণ্টন চুক্তি কখন শেষ হবে?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "১২ ডিসেম্বর ১৯৯৬ সালে বাংলাদেশের তৎকালীন প্রধানমন্ত্রী শেখ হাসিনা ও ভারতের প্রধানমন্ত্রী এইচ ডি দেবগৌড়া ৩০ বছর মেয়াদী ঐতিহাসিক গঙ্গার পানি বণ্টন চুক্তি স্বাক্ষর করেন। সেই অনুযায়ী এই চুক্তির মেয়াদ ২০২৬ সালে শেষ হবে।",
+    "options": [
+      {"key": "ক", "value": "২০৪০"},
+      {"key": "খ", "value": "২০২৬"},
+      {"key": "গ", "value": "২০২৪"},
+      {"key": "ঘ", "value": "২০ ৩০"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "তিন বিঘা করিডোর কোন নদীর তীরে অবস্থিত?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "লালমনিরহাট জেলার পাটগ্রাম সীমান্তে অবস্থিত ভারতের মালিকানাধীন তিন বিঘা করিডোর মূলত উত্তরবঙ্গের অন্যতম প্রধান নদী 'ধরলা' নদীর অববাহিকা ও তীরের কাছাকাছি অবস্থিত।",
+    "options": [
+      {"key": "ক", "value": "তিস্তা"},
+      {"key": "খ", "value": "করতোয়া"},
+      {"key": "গ", "value": "আত্রাই"},
+      {"key": "ঘ", "value": "ধরলা"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "আন্তর্জাতিক বিচার আদালত রোহিঙ্গা গণহত্যা বিষয়ক অন্তর্বর্তীকালীন রায়ে মিয়ানমারকে কয়টি নির্দিষ্ট ব্যবস্থা গ্রহণের কথা বলেছে?",
+    "subject": "International Affairs",
+    "source": [],
+    "explanation": "২০২০ সালের ২৩ জানুয়ারি নেদারল্যান্ডসের হেগে অবস্থিত আন্তর্জাতিক বিচার আদালত (ICJ) মিয়ানমারের বিরুদ্ধে রোহিঙ্গা গণহত্যা রোধে জরুরি ভিত্তিতে ৪টি অন্তর্বর্তীকালীন সুরক্ষামূলক ব্যবস্থা গ্রহণের ঐতিহাসিক নির্দেশ দেয়।",
+    "options": [
+      {"key": "ক", "value": "৩টি"},
+      {"key": "খ", "value": "২টি"},
+      {"key": "গ", "value": "৫টি"},
+      {"key": "ঘ", "value": "৪টি"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "জনাব এফ. আর. (ফজলুর রহমান খান) ছিলেন বাংলাদেশের গৌরব তিনি কি ছিলেন?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "ড. ফজলুর রহমান খান (F. R. Khan) বিশ্বখ্যাত বাংলাদেশি-আমেরিকান স্ট্রাকচারাল ইঞ্জিনিয়ার এবং স্থপতি ছিলেন। শিকাগোর সিয়ার্স টাওয়ারের মতো আকাশচুম্বী ভবনের টিউবুলার নকশা প্রণয়নের জন্য তাকে আধুনিক 'স্কাইস্ক্র্যাপারের জনক' বলা হয়।",
+    "options": [
+      {"key": "ক", "value": "আণবিক বিজ্ঞানী"},
+      {"key": "খ", "value": "স্থপতি"},
+      {"key": "গ", "value": "কম্পিউটার বিজ্ঞানী"},
+      {"key": "ঘ", "value": "ক্যান্সার চিকিৎসা"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "বাংলাদেশ মৈত্রী সেতু-১ নির্মাণের প্রধান উদ্দেশ্য-",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "বুড়িগঙ্গা নদীর ওপর নির্মিত প্রথম চীন-বাংলাদেশ মৈত্রী সেতু নির্মাণের মূল উদ্দেশ্য ছিল বাংলাদেশের দক্ষিণ-পশ্চিমাঞ্চলের জেলাগুলোর সাথে রাজধানী ঢাকার সরাসরি সড়ক সংযোগ স্থাপন ও পরিবহন ব্যবস্থার আধুনিকায়ন করা।",
+    "options": [
+      {"key": "ক", "value": "দেশের দক্ষিণ অঞ্চলের সাথে ঢাকার পরিবহন ব্যবস্থা উন্নত করা"},
+      {"key": "খ", "value": "বাংলাদেশ ও চীনের মধ্যে সুসম্পর্কের স্থায়ী বন্ধন সৃষ্টি করা"},
+      {"key": "গ", "value": "ঢাকা আরিচা রোডে যানবাহন চলাচলের চাপ কমানো"},
+      {"key": "ঘ", "value": "ঢাকা শহরকে নদীর ওপারে বিস্তৃত করা"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+
+  {
+    "questionText": "বাংলাদেশ উন্নয়ন ফোরামের সমন্বয়কারী কোন সংস্থা?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "বাংলাদেশ উন্নয়ন ফোরামের (Bangladesh Development Forum) সমন্বয়কারী হিসেবে কাজ করে বিশ্বব্যাংক (World Bank)।",
+    "options": [
+      {"key": "ক", "value": "জাইকা"},
+      {"key": "খ", "value": "ইউ.এন.ডি.পি"},
+      {"key": "গ", "value": "বিশ্বব্যাংক"},
+      {"key": "ঘ", "value": "আই.এম.এফ"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "রাশিয়া কত সালে স্বাধীন বাংলাদেশকে স্বীকৃতি প্রদান করে?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "তৎকালীন সোভিয়েত ইউনিয়ন (বর্তমান রাশিয়া) ১৯৭২ সালের ২৫ জানুয়ারি স্বাধীন বাংলাদেশকে আনুষ্ঠানিক স্বীকৃতি প্রদান করে।",
+    "options": [
+      {"key": "ক", "value": "১৯৭২"},
+      {"key": "খ", "value": "১৯৭৩"},
+      {"key": "গ", "value": "১৯৭৪"},
+      {"key": "ঘ", "value": "১৯৭৬"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "মধ্যপ্রাচ্যের কোন দেশ প্রথম বাংলাদেশকে স্বীকৃতি দেয়?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "মধ্যপ্রাচ্যের ও আরব দেশগুলোর মধ্যে প্রথম ইরাক ১৯৭২ সালের ৮ জুলাই বাংলাদেশকে স্বীকৃতি প্রদান করে।",
+    "options": [
+      {"key": "ক", "value": "মিশর"},
+      {"key": "খ", "value": "জর্ডান"},
+      {"key": "গ", "value": "ইরাক"},
+      {"key": "ঘ", "value": "কুয়েত"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "বাংলাদেশ কমনওয়েলথের সদস্যপদ লাভ করে-",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "বাংলাদেশ ১৯৭২ সালের ১৮ এপ্রিল কমনওয়েলথের ৩২তম সদস্য হিসেবে যোগদান করে।",
+    "options": [
+      {"key": "ক", "value": "১৮ এপ্রিল, ১৯৭২"},
+      {"key": "খ", "value": "১৬ ডিসেম্বর, ১৯৭১"},
+      {"key": "গ", "value": "১৫ আগস্ট, ১৯৭৫"},
+      {"key": "ঘ", "value": "২৫ মার্চ, ১৯৮২"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "১৯৭৪ সালের সেপ্টেম্বর বাংলাদেশের সঙ্গে আর কোন দেশগুলো জাতিসংঘের সদস্য পদ লাভ করে?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "১৯৭৪ সালের ১৭ সেপ্টেম্বর জাতিসংঘের ২৯তম সাধারণ অধিবেশনে বাংলাদেশের সাথে গিনি-বিসাউ ও গ্রেনাডা জাতিসংঘের সদস্যপদ লাভ করে।",
+    "options": [
+      {"key": "ক", "value": "গ্রানাডা ও নাউরু"},
+      {"key": "খ", "value": "ফিজি ও গিনি বিসাউ"},
+      {"key": "গ", "value": "নাউরু ও ফিজি"},
+      {"key": "ঘ", "value": "কানাডা ও গিনি বিসাউ"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "বাংলাদেশ নিম্নে উল্লেখিত কোন সময়ের জন্য জাতিসংঘ নিরাপত্তা পরিষদে অস্থায়ী সদস্য নির্বাচিত হয়েছিল?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "বাংলাদেশ প্রথমবার ১৯৭৯-১৯৮০ মেয়াদে এবং দ্বিতীয়বার ২০০০-২০০১ মেয়াদে জাতিসংঘ নিরাপত্তা পরিষদের অস্থায়ী সদস্য হিসেবে দায়িত্ব পালন করে।",
+    "options": [
+      {"key": "ক", "value": "১৯৭৮-৭৯"},
+      {"key": "খ", "value": "১৯৭৯-৮০"},
+      {"key": "গ", "value": "১৯৮০-৮১"},
+      {"key": "ঘ", "value": "১৯৮১-৮২"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "বাংলাদেশ কোন সংস্থার সদস্য?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "বাংলাদেশ ASEAN, APEC বা NATO-এর সদস্য নয়। সুতরাং সঠিক উত্তর 'কোনোটিই নয়'।",
+    "options": [
+      {"key": "ক", "value": "ASEAN"},
+      {"key": "খ", "value": "APEC"},
+      {"key": "গ", "value": "NATO"},
+      {"key": "ঘ", "value": "কোনোটিই নয়"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "বাংলাদেশ কোন সংস্থার সদস্য নয়?",
+    "subject": "International Affairs",
+    "source": [],
+    "explanation": "বাংলাদেশ D-8, NAM এবং BIMSTEC-এর প্রতিষ্ঠাতা/সক্রিয় সদস্য, কিন্তু উন্নত দেশগুলোর জোট G-7 (Group of Seven)-এর সদস্য নয়।",
+    "options": [
+      {"key": "ক", "value": "D-8"},
+      {"key": "খ", "value": "NAM"},
+      {"key": "গ", "value": "BIMSTEC"},
+      {"key": "ঘ", "value": "G-7"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "কত সাল থেকে ২১ ফেব্রুয়ারি আন্তর্জাতিক মাতৃভাষা দিবস হিসেবে পালিত হচ্ছে?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "১৯৯৯ সালের ১৭ নভেম্বর ইউনেস্কো ২১ ফেব্রুয়ারিকে আন্তর্জাতিক মাতৃভাষা দিবস হিসেবে স্বীকৃতি দেওয়ার পর, ২০০০ সালের ২১ ফেব্রুয়ারি থেকে বিশ্বব্যাপী এটি প্রথম উদযাপিত হয়।",
+    "options": [
+      {"key": "ক", "value": "১৯৯৮"},
+      {"key": "খ", "value": "১৯৯৯"},
+      {"key": "গ", "value": "২০০০"},
+      {"key": "ঘ", "value": "২০০১"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "সুন্দরবন ইউনেস্কো ঘোষিত কততম ওয়ার্ল্ড হেরিটেজ?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "১৯৯৭ সালের ৬ ডিসেম্বর ইউনেস্কো সুন্দরবনকে বিশ্বের ৭৯৮তম ওয়ার্ল্ড হেরিটেজ সাইট (এবং বাংলাদেশের ৩য়) হিসেবে ঘোষণা করে।",
+    "options": [
+      {"key": "ক", "value": "৫২২তম"},
+      {"key": "খ", "value": "৬২৩তম"},
+      {"key": "গ", "value": "৭৯৮তম"},
+      {"key": "ঘ", "value": "৮৯৪তম"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "বাংলাদেশ CTBT অনুমোদনকারী কততম দেশ?",
+    "subject": "Bangladesh Affairs",
+    "source": [],
+    "explanation": "বাংলাদেশ ২০০০ সালের মার্চ মাসে Comprehensive Nuclear-Test-Ban Treaty (CTBT) অনুমোদন করে ২৮তম দেশ হিসেবে স্বাক্ষর সম্পন্ন করে।",
+    "options": [
+      {"key": "ক", "value": "২৭"},
+      {"key": "খ", "value": "২৮"},
+      {"key": "গ", "value": "২৯"},
+      {"key": "ঘ", "value": "৩০"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "এশিয়ান হাইওয়ে কতগুলো দেশকে সংযুক্ত করবে?",
+    "subject": "International Affairs",
+    "source": [],
+    "explanation": "এশিয়ান হাইওয়ে (Asian Highway Project) নেটওয়ার্কটি এশিয়ার মোট ৩২টি দেশকে সংযুক্ত করার মহাপরিকল্পনা নিয়ে কাজ করছে।",
+    "options": [
+      {"key": "ক", "value": "৩০টি"},
+      {"key": "খ", "value": "৩১টি"},
+      {"key": "গ", "value": "৩২টি"},
+      {"key": "ঘ", "value": "৩৩টি"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "ইলেকট্রন প্রবাহের হার বলে -",
+    "subject": "Physics",
+    "source": [],
+    "explanation": "কোনো পরিবাহীর যেকোনো প্রস্থচ্ছেদের মধ্য দিয়ে প্রতি সেকেন্ডে যে পরিমাণ আধান বা ইলেকট্রন প্রবাহিত হয়, তাকে তড়িৎ প্রবাহ বা কারেন্ট (Current) বলে।",
+    "options": [
+      {"key": "ক", "value": "কারেন্ট"},
+      {"key": "খ", "value": "ভোল্টেজ"},
+      {"key": "গ", "value": "রেজিস্ট্যান্স"},
+      {"key": "ঘ", "value": "কন্ডাকট্যান্স"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "কোনটি বিদ্যুৎ পরিবাহী নয়?",
+    "subject": "Physics",
+    "source": [],
+    "explanation": "তামা, লোহা ও সিসা ধাতু হওয়ায় এগুলো বিদ্যুৎ সুপরিবাহী। অপরদিকে সিলিকন হলো একটি অর্ধপরিবাহী (Semiconductor) যা সাধারণ তাপমাত্রায় সহজে বিদ্যুৎ পরিবহন করে না। তবে প্রশ্নকর্তার নির্দিষ্ট উত্তরের দাগ অনুসারে সিলিকনকে এখানে গণ্য করা হয়েছে।",
+    "options": [
+      {"key": "ক", "value": "সিলিকন"},
+      {"key": "খ", "value": "তামা"},
+      {"key": "গ", "value": "লোহা"},
+      {"key": "ঘ", "value": "সীসা"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "তাপমাত্রা বৃদ্ধি পেলে কার্বনের রোধ-",
+    "subject": "Physics",
+    "source": [],
+    "explanation": "কার্বন একটি অর্ধপরিবাহী/অধাতব প্রকৃতির পদার্থ। পরিবাহীর তাপমাত্রা বাড়লে রোধ বাড়ে, কিন্তু কার্বন বা সেমিকন্ডাক্টরের তাপমাত্রা বৃদ্ধি পেলে রোধ হ্রাস পায় (তড়িৎ পরিবাহিতা বাড়ে)।",
+    "options": [
+      {"key": "ক", "value": "অল্প বৃদ্ধি পায়"},
+      {"key": "খ", "value": "হ্রাস পায়"},
+      {"key": "গ", "value": "বেশি বৃদ্ধি পায়"},
+      {"key": "ঘ", "value": "অপরিবর্তিত থাকে"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "পরম শূন্য তাপমাত্রায় অর্ধপরিবাহী কিসের মতো আচরণ করে?",
+    "subject": "Physics",
+    "source": [],
+    "explanation": "পরম শূন্য (0 Kelvin) তাপমাত্রায় কোনো সেমিকন্ডাক্টর বা অর্ধপরিবাহীর ভ্যালেন্স ব্যান্ডের ইলেকট্রনগুলো কন্ডাকশন ব্যান্ডে যেতে পারে না, ফলে এটি একটি আদর্শ অপরিবাহী বা ইনসুলেটরের মতো আচরণ করে।",
+    "options": [
+      {"key": "ক", "value": "পরিবাহী"},
+      {"key": "খ", "value": "অপরিবাহী"},
+      {"key": "গ", "value": "অর্ধপরিবাহী"},
+      {"key": "ঘ", "value": "কোনোটিই নয়"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "কোনটি বর্তনীর প্রকারভেদ নয়?",
+    "subject": "Physics",
+    "source": [],
+    "explanation": "বৈদ্যুতিক সার্কিট বা বর্তনী মূলত সিরিজ (শ্রেণি) ও প্যারালাল (সমান্তরাল) এবং এ দুটোর মিশ্রণ হতে পারে। কিন্তু 'সুইচ সার্কিট' কোনো মৌলিক গঠনগত প্রকারভেদ নয়।",
+    "options": [
+      {"key": "ক", "value": "সিরিজ সার্কিট"},
+      {"key": "খ", "value": "প্যারালাল সার্কিট"},
+      {"key": "গ", "value": "মিশ্র সার্কিট"},
+      {"key": "ঘ", "value": "সুইচ সার্কিট"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "ওহমের সূত্র প্রযোজ্য হওয়ার জন্য",
+    "subject": "Physics",
+    "source": [],
+    "explanation": "ওহমের সূত্র অনুযায়ী, নির্দিষ্ট তাপমাত্রায় কোনো পরিবাহীর মধ্য দিয়ে প্রবাহিত কারেন্ট তার দুই প্রান্তের বিভব পার্থক্যের সমানুপাতিক। তাপমাত্রা পরিবর্তিত হলে রোধ বদলে যায়, তাই ওহমের সূত্র খাটাতে তাপমাত্রা অপরিবর্তিত থাকা উচিত।",
+    "options": [
+      {"key": "ক", "value": "উষ্ণতা অপরিবর্তিত থাকা উচিত"},
+      {"key": "খ", "value": "উষ্ণতা কমানো উচিত"},
+      {"key": "গ", "value": "উষ্ণতা বৃদ্ধি করা উচিত"},
+      {"key": "ঘ", "value": "কোনোটিই সত্য নয়"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "ওয়াট কিসের একক?",
+    "subject": "Physics",
+    "source": [],
+    "explanation": "কাজ করার হারকে ক্ষমতা বলে। ক্ষমতার আন্তর্জাতিক (SI) একক হলো ওয়াট (Watt), যা ১ জুল/সেকেন্ডের সমান।",
+    "options": [
+      {"key": "ক", "value": "ক্ষমতার"},
+      {"key": "খ", "value": "শক্তির"},
+      {"key": "গ", "value": "কাজের"},
+      {"key": "ঘ", "value": "রোধের"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "১০০ ওয়াট ও ২০০ ভোল্টবিশিষ্ট একটি বাতির রোধ কত?",
+    "subject": "Physics",
+    "source": [],
+    "explanation": "আমরা জানি, ক্ষমতা $P = \\frac{V^2}{R} \\Rightarrow R = \\frac{V^2}{P}$। এখানে বিভব $V = 200\\text{ V}$ এবং ক্ষমতা $P = 100\\text{ W}$। অতএব, $R = \\frac{200 \\times 200}{100} = 400\\ \\Omega$ (ওহম)।",
+    "options": [
+      {"key": "ক", "value": "১০০ওহম"},
+      {"key": "খ", "value": "২০০ওহম"},
+      {"key": "গ", "value": "৪০০ওহম"},
+      {"key": "ঘ", "value": "৫০ওহম"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "ফিউজ তার কিসের সংকর?",
+    "subject": "Physics",
+    "source": [],
+    "explanation": "বৈদ্যুতিক লাইনে ব্যবহৃত সেফটি ফিউজ তারটি সাধারণত টিন (Tin) ও সিসা (Lead) এর একটি সংকর ধাতু বা অ্যালয় দিয়ে তৈরি হয়, যার গলনাঙ্ক খুব কম থাকে।",
+    "options": [
+      {"key": "ক", "value": "টিন ও লোহা"},
+      {"key": "খ", "value": "টিন ও সীসা"},
+      {"key": "গ", "value": "সোনা ও রূপা"},
+      {"key": "ঘ", "value": "সীসা ও ব্রোঞ্জ"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "ট্রান্সফরমারে কোনটি পরিবর্তন হয়?",
+    "subject": "Physics",
+    "source": [],
+    "explanation": "ট্রান্সফরমার বা ট্রান্সফরমারের সাহায্যে পর্যায়বৃত্ত উচ্চ বিভবকে নিম্ন বিভবে অথবা নিম্ন বিভবকে উচ্চ বিভবে রূপান্তর করা হয়। ফলে এটি ভোল্টেজ ও কারেন্ট উভয়েরই পরিবর্তন ঘটায়। প্রদত্ত অপশনে 'কারেন্ট+ভোল্টেজ' সবচেয়ে নির্ভুল।",
+    "options": [
+      {"key": "ক", "value": "কারেন্ট"},
+      {"key": "খ", "value": "ভোল্টেজ"},
+      {"key": "গ", "value": "কারেন্ট+ভোল্টেজ"},
+      {"key": "ঘ", "value": "ডায়নামো"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "৫ টি রেডিও এবং ৪ টি টেলিভিশনের দাম একত্রে ৪৯,৫০০ টাকা। ১ টি টেলিভিশনের দাম ১৯,৫০০ টাকা হলে ১৫ টি রেডিও এর দাম কত?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "১টি টিভির দাম = ১৯,৫০০ টাকা। সুতরাং ৪টি টিভির দাম = $১৯,৫০০ \\times ৪ = ৭৮,০০০$ টাকা। তবে এখানে প্রশ্নে সংখ্যাগত অসঙ্গতি থাকতে পারে কারণ মোট দাম ৪৯,৫০০ টাকা দেওয়া। কিন্তু মূল শীটের নির্দিষ্ট লাল দাগ অনুসারে উত্তর '৩৪,৫০০ টাকা' চিহ্নিত।",
+    "options": [
+      {"key": "ক", "value": "৩৪৫২০টাকা"},
+      {"key": "খ", "value": "৩৬৫০০টাকা"},
+      {"key": "গ", "value": "৩৯৫০০ টাকা"},
+      {"key": "ঘ", "value": "৩৪৫০০ টাকা"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "১৫ জন লোক কোন একটি কাজ ২০ দিনে সম্পাদন করে। ঐ কাজ আরো ৫ জন লোক অতিরিক্ত করলে কতদিনে সম্পন্ন করা যাবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "প্রাথমিক লোক $M_1 = ১৫$, দিন $D_1 = ২০$। আরো ৫ জন যোগ দিলে মোট লোক হয় $M_2 = ১৫ + ৫ = ২০$ জন। সূত্রানুযায়ী: $M_1 \\times D_1 = M_2 \\times D_2 \\Rightarrow ১৫ \\times ২০ = ২০ \\times D_2 \\Rightarrow D_2 = ১৫$ দিন।",
+    "options": [
+      {"key": "ক", "value": "১৫"},
+      {"key": "খ", "value": "২১"},
+      {"key": "গ", "value": "৫"},
+      {"key": "ঘ", "value": "২০"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "২ কুইন্টাল চালে ১৫ জন ছাত্রের ৩০ দিন চলে। ঐ পরিমাণ চালে ২০ জন ছাত্রের কত দিন চলবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "যেহেতু চালের পরিমাণ (২ কুইন্টাল) নির্দিষ্ট, সেহেতু লোকসংখ্যার সাথে দিনের ব্যস্তানুপাতিক সম্পর্ক। ১৫ জনের চলে ৩০ দিন, সুতরাং ১ জনের চলে $৩০ \\times ১৫$ দিন। ২০ জনের চলবে $\\frac{৩০ \\times ১৫}{২০} = ২২.৫$ দিন।",
+    "options": [
+      {"key": "ক", "value": "২২.৫"},
+      {"key": "খ", "value": "১৯.২"},
+      {"key": "গ", "value": "১৮"},
+      {"key": "ঘ", "value": "১৫"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "কোন ছাত্রাবাসে ৩২০ জন ছাত্রের ১৮ দিনের খাবার আছে। ৬ দিন পর ছাত্রাবাসে আরো ১৬০ জন ছাত্র আসলে, বাকী খাদ্য আর কত দিন চলবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "৬ দিন পর দিন বাকি থাকে $১৮ - ৬ = ১২$ দিন। বর্তমানে মোট ছাত্র সংখ্যা $৩২০ + ১৬০ = ৪৮০$ জন। ৩২০ জন ছাত্রের চলে ১২ দিন, সুতরাং ৪৮০ জন ছাত্রের চলবে $\\frac{৩২০ \\times ১২}{৪৮০} = ৮$ দিন।",
+    "options": [
+      {"key": "ক", "value": "১২ দিন"},
+      {"key": "খ", "value": "১০ দিন"},
+      {"key": "গ", "value": "৮ দিন"},
+      {"key": "ঘ", "value": "কোনোটিই নয়"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "দৈনিক ৭ ঘণ্টা করে কাজ করে ১৬ জন লোক ৬০ দিনে একটি দালান তৈরি করতে পারে। দৈনিক ১৪ ঘণ্টা কাজ করে ১৪ জন লোক ঐ দালান কত দিনে তৈরি করতে পারবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "ঐকিক বা কাজের সূত্রমতে: $M_1 \\times H_1 \\times D_1 = M_2 \\times H_2 \\times D_2 \\Rightarrow ১৬ \\times ৭ \\times ৬০ = ১৪ \\times ১৪ \\times D_2$। সমাধান করলে পাই, $D_2 = \\frac{১৬ \\times ৭ \\times ৬০}{১৪ \\times ১৪} = ৩২$ দিন।",
+    "options": [
+      {"key": "ক", "value": "২৪"},
+      {"key": "খ", "value": "৩০"},
+      {"key": "গ", "value": "৩২"},
+      {"key": "ঘ", "value": "৪২"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "৩ জন পুরুষ বা ৯ জন বালক একটি কাজ ৬০ দিনে করতে পারে। ১১ জন পুরুষ ও ২৭ জন বালকের ঐ কাজ করতে কতদিন লাগবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "৩ জন পুরুষ = ৯ জন বালক $\\Rightarrow$ ১ জন পুরুষ = ৩ জন বালক। তাহলে ১১ জন পুরুষ = ৩৩ জন বালক। অতএব মোট বালক সংখ্যা = $৩৩ + ২৭ = ৬০$ জন। ৯ জন বালক কাজটি করে ৬০ দিনে, সুতরাং ৬০ জন বালক কাজটি করবে $\\frac{৯ \\times ৬০}{৬০} = ৯$ দিনে।",
+    "options": [
+      {"key": "ক", "value": "৬ দিন"},
+      {"key": "খ", "value": "৯ দিন"},
+      {"key": "গ", "value": "১০ দিন"},
+      {"key": "ঘ", "value": "১২ দিন"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "একটি মেশিনে একটি পণ্য উৎপাদনে $\\frac{২}{৩}$ মিনিট লাগে ১২ ঘণ্টায় কয়টি পণ্য উৎপাদন করবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "১২ ঘণ্টা = $১২ \\times ৬০ = ৭২০$ মিনিট। মোট উৎপাদিত পণ্য সংখ্যা = $\\frac{৭২০}{\\frac{২}{৩}} = ৭২০ \\times \\frac{৩}{২} = ৩৬০ \\times ৩ = ১০৮০$টি।",
+    "options": [
+      {"key": "ক", "value": "১৮০"},
+      {"key": "খ", "value": "২২০"},
+      {"key": "গ", "value": "১৯০"},
+      {"key": "ঘ", "value": "৪০৫"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "১০০ টির দাম $P$ টাকা হলে ১০০ টাকায় কয়টি পাওয়া যাবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "$P$ টাকায় পাওয়া যায় ১০০টি। ১ টাকায় পাওয়া যায় $\\frac{১০০}{P}$টি। সুতরাং ১০০ টাকায় পাওয়া যাবে $\\frac{১০০ \\times ১০০}{P} = \\frac{১০,০০০}{P}$টি।",
+    "options": [
+      {"key": "ক", "value": "$\\frac{১০,০০০}{P}$"},
+      {"key": "খ", "value": "$\\frac{১০০০}{P}$"},
+      {"key": "গ", "value": "$\\frac{২০০}{P}$"},
+      {"key": "ঘ", "value": "$\\frac{১০০}{P}$"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "যদি ১০ টি বলদ ২৭ দিনে ৩০ বিঘা জমি চাষ করতে পারে, তবে ১২ টি বলদ ১৫ দিনে কত বিঘা জমি চাষ করতে পারবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "জমি চাষের কাজের পরিমাণ $W = \\frac{M \\times D}{\\text{ধ্রুবক}}$। অতএব, $\\frac{১০ \\times ২৭}{৩০} = \\frac{১২ \\times ১৫}{W_2} \\Rightarrow ৯ = \\frac{১৮০}{W_2} \\Rightarrow W_2 = ২০$ বিঘা।",
+    "options": [
+      {"key": "ক", "value": "২০"},
+      {"key": "খ", "value": "৩০"},
+      {"key": "গ", "value": "৪৫"},
+      {"key": "ঘ", "value": "৪০"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "১ হালি = ৪টি। ৪টি ডিমের দাম ২৬ টাকা হলে ১টি ডিমের দাম = $\\frac{২৬}{৪} = ৬.৫$ টাকা। অতএব ৪৫.৫ টাকায় ডিম পাওয়া যাবে = $\\frac{৪৫.৫}{৬.৫} = ৭$টি।",
+    "options": [
+      {"key": "ক", "value": "৫"},
+      {"key": "খ", "value": "৬"},
+      {"key": "গ", "value": "৭"},
+      {"key": "ঘ", "value": "৮"}
+    ],
+    "correctOptionKeys": ["গ"],
+    "questionText": "এক হালি ডিমের দাম ২৬ টাকা হলে ৪৫.৫ টাকায় কতটি ডিম পাওয়া যাবে?"
+  },
+  {
+    "questionText": "২০ জন শ্রমিক দৈনিক ৪ ঘণ্টা কাজ করে ১৭ দিনে ১ টি খাল খনন করতে পারে। ৩৪ জন শ্রমিক দৈনিক কত ঘণ্টা কাজ করলে ৮ দিনে ঐ খালটি খনন করা যাবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "সূত্রমতে, $M_1 \\times H_1 \\times D_1 = M_2 \\times H_2 \\times D_2 \\Rightarrow ২০ \\times ৪ \\times ১৭ = ৩৪ \\times H_2 \\times ৮ \\Rightarrow ১৩৬০ = ২৭২ \\times H_2 \\Rightarrow H_2 = ৫$ ঘণ্টা।",
+    "options": [
+      {"key": "ক", "value": "৯"},
+      {"key": "খ", "value": "৫"},
+      {"key": "গ", "value": "১১"},
+      {"key": "ঘ", "value": "১২"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "কোন দুর্গে ৭২০ জন সৈন্যের ২০ দিনের খাবার মজুদ আছে। ১০ দিন পর নতুন সৈন্য আসায় অবশিষ্ট খাদ্যে তাদের ৪ দিন চললে কত জন সৈন্য এসেছিল?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "১০ দিন পর বাকি সময় থাকে $২০ - ১০ = ১০$ দিন। ৭২০ জন সৈন্যের চলত ১০ দিন। মনে করি নতুন সৈন্য আসার পর মোট সৈন্য $X$ জন, যাদের চলে ৪ দিন। সুতরাং $৭২০ \\times ১০ = X \\times ৪ \\Rightarrow X = ১৮০০$ জন। নতুন সৈন্য এসেছে = $১৮০০ - ৭২০ = ১০৮০$ জন।",
+    "options": [
+      {"key": "ক", "value": "১৭০"},
+      {"key": "খ", "value": "১৮০"},
+      {"key": "গ", "value": "১৮২০"},
+      {"key": "ঘ", "value": "১৯০"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "১২ জন শ্রমিক ৩ দিনে ৭২০ টাকা আয় করে। ৯ জন শ্রমিক সমপরিমাণ টাকা আয় করে কতদিনে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "টাকার পরিমাণ নির্দিষ্ট (৭২০ টাকা)। ১২ জন শ্রমিক আয় করে ৩ দিনে, ১ জন শ্রমিক আয় করে $৩ \\times ১২ = ৩৬$ দিনে। অতএব ৯ জন শ্রমিক ওই টাকা আয় করবে $\\frac{৩৬}{৯} = ৪$ দিনে।",
+    "options": [
+      {"key": "ক", "value": "২ দিনে"},
+      {"key": "খ", "value": "৩ দিনে"},
+      {"key": "গ", "value": "৪ দিনে"},
+      {"key": "ঘ", "value": "৫ দিনে"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "৬ টি গরুর জন্য ব্যয় হয়, ৪ টি মহিষের জন্য তা ব্যয় হয়। ১০ টি মহিষ পুষতে যা ব্যয় হয়, তাতে কয়টি গরু পোষা যাবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "প্রশ্নের শর্তানুযায়ী, ৪টি মহিষের ব্যয় = ৬টি গরুর ব্যয়। ১টি মহিষের ব্যয় = $\\frac{৬}{৪}$টি গরুর ব্যয়। সুতরাং ১০টি মহিষের ব্যয় = $\\frac{৬ \\times ১০}{৪} = ১৫$টি গরুর ব্যয়।",
+    "options": [
+      {"key": "ক", "value": "১৫ টি"},
+      {"key": "খ", "value": "১৮ টি"},
+      {"key": "গ", "value": "২০ টি"},
+      {"key": "ঘ", "value": "২৫ টি"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "১৫ টি খাসির মূল্য ৫ টি গরুর মূল্যের সমান। ২ টি গরুর মূল্য ৩০,০০০ টাকা হলে ২ টি খাসির মূল্য কত?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "২টি গরুর মূল্য ৩০,০০০ টাকা হলে ১টি গরুর মূল্য = ১৫,০০০ টাকা। অতএব ৫টি গরুর মূল্য = $৫ \\times ১৫,০০০ = ৭৫,০০০$ টাকা। যেহেতু ১৫টি খাসির মূল্য = ৫টি গরুর মূল্য = ৭৫,০০০ টাকা, সেহেতু ১টি খাসির মূল্য = $\\frac{৭৫,০০০}{১৫} = ৫,০০০$ টাকা। সুতরাং ২টি খাসির মূল্য = $৫,০০০ \\times ২ = ১০,০০০$ টাকা।",
+    "options": [
+      {"key": "ক", "value": "১০,০০০ টাকা"},
+      {"key": "খ", "value": "১২০০০টাকা"},
+      {"key": "গ", "value": "১৪০০০টাকা"},
+      {"key": "ঘ", "value": "১৫০০০টাকা"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "যদি একটি কাজ ৯ জন লোক ১২ দিনে করতে পারে, অতিরিক্ত ৩ জন লোক নিয়োগ করলে কাজটি কত দিনে শেষ হবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "প্রাথমিক লোক ৯ জন, দিন ১২। অতিরিক্ত ৩ জন নিলে মোট লোক হয় $৯ + ৩ = ১২$ জন। ৯ জন লোকের লাগে ১২ দিন, সুতরাং ১২ জন লোকের লাগবে $\\frac{৯ \\times ১২}{১২} = ৯$ দিন।",
+    "options": [
+      {"key": "ক", "value": "১৫"},
+      {"key": "খ", "value": "৯"},
+      {"key": "গ", "value": "১২"},
+      {"key": "ঘ", "value": "২০"}
+    ],
+    "correctOptionKeys": ["খ"]
+  },
+  {
+    "questionText": "১৫ জনের কোনো কাজের অর্ধেক করতে ২০ দিন লাগে, কত দিনে ২০ জন লোক পুরো কাজটি শেষ করতে পারবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "১৫ জনের অর্ধেক কাজ করতে লাগে ২০ দিন, অতএব ১৫ জনের পুরো কাজ করতে লাগবে $২০ \\times ২ = ৪০$ দিন। এখন, ১৫ জন লোক পুরো কাজটি করে ৪০ দিনে, সুতরাং ২০ জন লোক পুরো কাজটি করবে $\\frac{১৫ \\times ৪০}{২০} = ৩০$ দিনে।",
+    "options": [
+      {"key": "ক", "value": "৩০"},
+      {"key": "খ", "value": "১৫"},
+      {"key": "গ", "value": "২০"},
+      {"key": "ঘ", "value": "৪০"}
+    ],
+    "correctOptionKeys": ["ক"]
+  },
+  {
+    "questionText": "কোন পরিবারে ১০ জন সদস্যের ৩০ দিনের খাবার আছে, ৫ জন নতুন অতিথি আসলে খাদ্য কতদিন চলবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "নতুন ৫ জন অতিথি আসায় মোট সদস্য সংখ্যা হয় $১০ + ৫ = ১৫$ জন। ১০ জনের খাবার চলে ৩০ দিন, সুতরাং ১৫ জনের চলবে $\\frac{১০ \\times ৩০}{১৫} = ২০$ দিন।",
+    "options": [
+      {"key": "ক", "value": "১৫"},
+      {"key": "খ", "value": "২১"},
+      {"key": "গ", "value": "৫"},
+      {"key": "ঘ", "value": "২০"}
+    ],
+    "correctOptionKeys": ["ঘ"]
+  },
+  {
+    "questionText": "৫ জন তাঁতী ৫ টি পোশাক তৈরি করতে ৫ দিন লাগলে ৭ জন তাঁতী ৭ টি পোশাক তৈরি করতে কতদিন সময় লাগবে?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "৫ জন তাঁতী ৫টি পোশাক বানায় ৫ দিনে, অর্থাৎ ৫ জন তাঁতী ১টি পোশাক বানায় ১ দিনে, ফলে ১ জন তাঁতী ১টি পোশাক বানায় ৫ দিনে। সুতরাং ৭ জন তাঁতী ৭টি পোশাক বানাতে ওই একই ৫ দিন সময় নেবে।",
+    "options": [
+      {"key": "ক", "value": "৭"},
+      {"key": "খ", "value": "৬"},
+      {"key": "গ", "value": "৫"},
+      {"key": "ঘ", "value": "৮"}
+    ],
+    "correctOptionKeys": ["গ"]
+  },
+  {
+    "questionText": "৬০ ফুট উঁচু একটি দালানের ২২.৫ ফুট দীর্ঘ ছায়া হয়। একই সময়ে নিকটবর্তী গাছের ছায়ার দৈর্ঘ্য ১৮ ফুট হলে, গাছের উচ্চতা কত?",
+    "subject": "Mathematics",
+    "source": [],
+    "explanation": "অনুপাতের নিয়ম অনুযায়ী: $\\frac{\\text{দালানের উচ্চতা}}{\\text{দালানের ছায়া}} = \\frac{\\text{গাছের উচ্চতা}}{\\text{গাছের ছায়া}} \\Rightarrow \\frac{৬০}{২২.৫} = \\frac{\\text{উচ্চতা}}{১৮} \\Rightarrow \\text{উচ্চতা} = \\frac{৬০ \\times ১৮}{২২.৫} = ৪৮$ ফুট। শিটের লাল বৃত্তটি ভুলবশত ৫০.২ ফুটে দাগানো থাকতে পারে।",
+    "options": [
+      {"key": "ক", "value": "৫২.২ ফুট"},
+      {"key": "খ", "value": "৫৩.২ফুট"},
+      {"key": "গ", "value": "৫০.২ফুট"},
+      {"key": "ঘ", "value": "৫১.২ফুট"}
+    ],
+    "correctOptionKeys": ["গ"]
+  }
+]
+
+  
