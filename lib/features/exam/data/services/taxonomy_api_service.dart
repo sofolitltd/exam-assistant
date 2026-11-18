@@ -1,3 +1,4 @@
+import '../../../../core/models/paginated_list.dart';
 import '../../../auth/data/services/account_api_service.dart';
 import '../models/question_model.dart';
 
@@ -108,20 +109,25 @@ class TaxonomyApiService {
     return _list(json).map(SyllabusNode.fromJson).toList();
   }
 
-  Future<List<QuestionModel>> getQuestionBank({
+  Future<PaginatedList<QuestionModel>> getQuestionBank({
     int? programId,
     int? syllabusId,
     int? nodeId,
+    int limit = 50,
+    int offset = 0,
   }) async {
     final query = <String, String>{
       if (programId != null) 'programId': '$programId',
       if (syllabusId != null) 'syllabusId': '$syllabusId',
       if (nodeId != null) 'nodeId': '$nodeId',
+      'limit': '$limit',
+      'offset': '$offset',
     };
     final json = await _get('/v1/question-bank', query: query);
-    return _list(json)
-        .map((item) => QuestionModel.fromMap(item, item['id'] as String? ?? ''))
-        .toList();
+    return PaginatedList.fromJson(
+      json,
+      (item) => QuestionModel.fromMap(item, item['id'] as String? ?? ''),
+    );
   }
 
   Future<dynamic> _get(String path, {Map<String, String>? query}) async {

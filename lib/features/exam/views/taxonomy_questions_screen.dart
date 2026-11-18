@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/riverpod/paged_state.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/option_marker.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
-import '../../auth/controllers/auth_controller.dart';
+import '../controllers/paged_question_providers.dart';
 import '../data/models/question_model.dart';
-import '../data/services/taxonomy_api_service.dart';
 import '../services/question_tts_service.dart';
 import '../widgets/question_playback_bar.dart';
 
@@ -29,19 +29,19 @@ class TaxonomyQuestionsScreen extends ConsumerStatefulWidget {
 
 class _TaxonomyQuestionsScreenState
     extends ConsumerState<TaxonomyQuestionsScreen> {
-  late final Future<List<QuestionModel>> _future;
   List<GlobalKey> _itemKeys = const [];
   int? _activeIndex;
+  final _scrollController = ScrollController();
 
   late final QuestionTtsService _tts;
+
+  (int, int) get _key => (widget.syllabusId, widget.nodeId);
 
   @override
   void initState() {
     super.initState();
     _tts = ref.read(questionTtsServiceProvider);
-    _future = TaxonomyApiService(
-      accountApi: ref.read(accountApiServiceProvider),
-    ).getQuestionBank(syllabusId: widget.syllabusId, nodeId: widget.nodeId);
+    _scrollController.addListener(_maybeLoadMore);
   }
 
   @override
@@ -49,7 +49,17 @@ class _TaxonomyQuestionsScreenState
     // Stop reading aloud when leaving the screen; otherwise playback
     // continues with no control left to stop it.
     _tts.stop();
+    _scrollController.removeListener(_maybeLoadMore);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _maybeLoadMore() {
+    if (_scrollController.position.pixels <
+        _scrollController.position.maxScrollExtent - 200) {
+      return;
+    }
+    ref.read(taxonomyQuestionsProvider(_key).notifier).loadMore();
   }
 
   void _handleActiveIndexChanged(int? index) {
@@ -71,42 +81,38 @@ class _TaxonomyQuestionsScreenState
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<QuestionModel>>(
-      future: _future,
-      builder: (context, snapshot) {
-        final questions = snapshot.data ?? const <QuestionModel>[];
-        if (_itemKeys.length != questions.length) {
-          _itemKeys = List.generate(questions.length, (_) => GlobalKey());
-        }
+    final state = ref.watch(taxonomyQuestionsProvider(_key));
+    final questions = state.items;
+    if (_itemKeys.length != questions.length) {
+      _itemKeys = List.generate(questions.length, (_) => GlobalKey());
+    }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(widget.title),
-            actions: [
-              QuestionPlaybackBar(
-                questions: questions,
-                onActiveIndexChanged: _handleActiveIndexChanged,
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: [
+          QuestionPlaybackBar(
+            questions: questions,
+            onActiveIndexChanged: _handleActiveIndexChanged,
           ),
-          body: _buildBody(snapshot, questions),
-        );
-      },
+        ],
+      ),
+      body: _buildBody(state, questions),
     );
   }
 
   Widget _buildBody(
-    AsyncSnapshot<List<QuestionModel>> snapshot,
+    PagedState<QuestionModel> state,
     List<QuestionModel> questions,
   ) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
+    if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (snapshot.hasError) {
+    if (state.error != null && questions.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text('Could not load questions: ${snapshot.error}'),
+          child: Text('Could not load questions: ${state.error}'),
         ),
       );
     }
@@ -117,73 +123,84 @@ class _TaxonomyQuestionsScreenState
     }
 
     return ResponsiveWrapper(
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: questions.length,
-        itemBuilder: (context, index) {
-          final question = questions[index];
-          final isActive = index == _activeIndex;
-          return Card(
-            key: _itemKeys[index],
-            margin: const EdgeInsets.only(bottom: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: isActive
-                  ? const BorderSide(color: AppTheme.primaryColor, width: 2)
-                  : BorderSide.none,
-            ),
-            elevation: isActive ? 4 : 1,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          question.questionText,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+      child: RefreshIndicator(
+        onRefresh: () =>
+            ref.read(taxonomyQuestionsProvider(_key).notifier).refresh(),
+        child: ListView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(16),
+          itemCount: questions.length + (state.isLoadingMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index == questions.length) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final question = questions[index];
+            final isActive = index == _activeIndex;
+            return Card(
+              key: _itemKeys[index],
+              margin: const EdgeInsets.only(bottom: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: isActive
+                    ? const BorderSide(color: AppTheme.primaryColor, width: 2)
+                    : BorderSide.none,
+              ),
+              elevation: isActive ? 4 : 1,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            question.questionText,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                      QuestionSpeakButton(question: question),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ...question.options.indexed.map((entry) {
-                    final (optionIndex, option) = entry;
-                    final correct = question.correctOptionKeys.contains(
-                      option.key,
-                    );
-                    return ListTile(
-                      dense: true,
-                      leading: OptionMarker(
-                        index: optionIndex,
-                        optionKey: option.key,
-                        state: correct
-                            ? OptionMarkerState.correct
-                            : OptionMarkerState.neutral,
-                      ),
-                      title: Text(option.value),
-                      contentPadding: EdgeInsets.zero,
-                    );
-                  }),
-                  if (question.explanation?.isNotEmpty ?? false) ...[
-                    const Divider(),
-                    Text(
-                      question.explanation!,
-                      style: TextStyle(color: Colors.blueGrey.shade700),
+                        QuestionSpeakButton(question: question),
+                      ],
                     ),
+                    const SizedBox(height: 12),
+                    ...question.options.indexed.map((entry) {
+                      final (optionIndex, option) = entry;
+                      final correct = question.correctOptionKeys.contains(
+                        option.key,
+                      );
+                      return ListTile(
+                        dense: true,
+                        leading: OptionMarker(
+                          index: optionIndex,
+                          optionKey: option.key,
+                          state: correct
+                              ? OptionMarkerState.correct
+                              : OptionMarkerState.neutral,
+                        ),
+                        title: Text(option.value),
+                        contentPadding: EdgeInsets.zero,
+                      );
+                    }),
+                    if (question.explanation?.isNotEmpty ?? false) ...[
+                      const Divider(),
+                      Text(
+                        question.explanation!,
+                        style: TextStyle(color: Colors.blueGrey.shade700),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

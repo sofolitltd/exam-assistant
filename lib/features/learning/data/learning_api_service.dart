@@ -1,3 +1,4 @@
+import '../../../core/models/paginated_list.dart';
 import '../../auth/data/services/account_api_service.dart';
 import 'learning_models.dart';
 
@@ -13,12 +14,16 @@ class LearningApiService {
     return ExamLeaderboard.fromJson(Map<String, dynamic>.from(json as Map));
   }
 
-  Future<List<MistakeQuestion>> getMistakes({String? examId}) async {
+  Future<PaginatedList<MistakeQuestion>> getMistakes({
+    String? examId,
+    int limit = 100,
+    int offset = 0,
+  }) async {
     final json = await _api.getApiJson(
       '/v1/users/me/mistakes',
-      query: {'examId': ?examId},
+      query: {'examId': ?examId, 'limit': '$limit', 'offset': '$offset'},
     );
-    return _list(json, MistakeQuestion.fromJson);
+    return PaginatedList.fromJson(json, MistakeQuestion.fromJson);
   }
 
   Future<List<SubjectPerformance>> getSubjectPerformance({

@@ -41,19 +41,28 @@ class _ListenScreenState extends ConsumerState<ListenScreen> {
   late final Future<_ListenSet> _future = _load();
   int _current = 0;
 
+  // Listen mode plays a whole set back-to-back, so it loads the single
+  // largest page the API allows rather than paginating (there's no "load
+  // more" concept mid-playback).
+  static const _maxListenSetSize = 200;
+
   Future<_ListenSet> _load() async {
     if (widget.isSubjectSource) {
-      final questions = await TaxonomyApiService(
+      final page = await TaxonomyApiService(
         accountApi: ref.read(accountApiServiceProvider),
-      ).getQuestionBank(syllabusId: widget.syllabusId, nodeId: widget.nodeId);
-      return _ListenSet(questions, const {});
+      ).getQuestionBank(
+        syllabusId: widget.syllabusId,
+        nodeId: widget.nodeId,
+        limit: _maxListenSetSize,
+      );
+      return _ListenSet(page.items, const {});
     }
     final mistakes = await ref
         .read(learningApiServiceProvider)
-        .getMistakes(examId: widget.examId);
+        .getMistakes(examId: widget.examId, limit: _maxListenSetSize);
     return _ListenSet(
-      [for (final m in mistakes) m.question],
-      {for (final m in mistakes) m.question.id: m.selectedKey},
+      [for (final m in mistakes.items) m.question],
+      {for (final m in mistakes.items) m.question.id: m.selectedKey},
     );
   }
 

@@ -27,11 +27,13 @@ class _MistakesPracticeScreenState
   List<GlobalKey> _itemKeys = const [];
   int? _activeIndex;
   late final QuestionTtsService _tts;
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _tts = ref.read(questionTtsServiceProvider);
+    _scrollController.addListener(_maybeLoadMore);
   }
 
   @override
@@ -39,7 +41,17 @@ class _MistakesPracticeScreenState
     // Stop reading aloud when leaving the screen; otherwise playback
     // continues with no control left to stop it.
     _tts.stop();
+    _scrollController.removeListener(_maybeLoadMore);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _maybeLoadMore() {
+    if (_scrollController.position.pixels <
+        _scrollController.position.maxScrollExtent - 200) {
+      return;
+    }
+    ref.read(mistakesProvider(widget.examId).notifier).loadMore();
   }
 
   void _handleActiveIndexChanged(int? index) {
@@ -60,8 +72,8 @@ class _MistakesPracticeScreenState
 
   @override
   Widget build(BuildContext context) {
-    final mistakesAsync = ref.watch(mistakesProvider(widget.examId));
-    final mistakes = mistakesAsync.value ?? const [];
+    final state = ref.watch(mistakesProvider(widget.examId));
+    final mistakes = state.items;
     if (_itemKeys.length != mistakes.length) {
       _itemKeys = List.generate(mistakes.length, (_) => GlobalKey());
     }
@@ -88,16 +100,20 @@ class _MistakesPracticeScreenState
           ],
         ],
       ),
-      body: mistakesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text('ভুল প্রশ্নগুলো লোড করা যায়নি: $error'),
-          ),
-        ),
-        data: (items) {
-          if (items.isEmpty) {
+      body: Builder(
+        builder: (context) {
+          if (state.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state.error != null && mistakes.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('ভুল প্রশ্নগুলো লোড করা যায়নি: ${state.error}'),
+              ),
+            );
+          }
+          if (mistakes.isEmpty) {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(32),
@@ -109,30 +125,41 @@ class _MistakesPracticeScreenState
               ),
             );
           }
-          return ResponsiveWrapper(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: items.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      '${items.length}টি প্রশ্ন — সঠিক উত্তর সবুজে, তোমার ভুল উত্তর লালে।',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+          return RefreshIndicator(
+            onRefresh: () =>
+                ref.read(mistakesProvider(widget.examId).notifier).refresh(),
+            child: ResponsiveWrapper(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: mistakes.length + 1 + (state.isLoadingMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        '${mistakes.length}টি প্রশ্ন — সঠিক উত্তর সবুজে, তোমার ভুল উত্তর লালে।',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    );
+                  }
+                  if (index == mistakes.length + 1) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  final i = index - 1;
+                  return ReviewQuestionCard(
+                    key: _itemKeys[i],
+                    question: mistakes[i].question,
+                    index: i,
+                    selectedKey: mistakes[i].selectedKey,
+                    showSelection: true,
+                    isActive: i == _activeIndex,
                   );
-                }
-                final i = index - 1;
-                return ReviewQuestionCard(
-                  key: _itemKeys[i],
-                  question: items[i].question,
-                  index: i,
-                  selectedKey: items[i].selectedKey,
-                  showSelection: true,
-                  isActive: i == _activeIndex,
-                );
-              },
+                },
+              ),
             ),
           );
         },

@@ -1,3 +1,4 @@
+import '../../../../core/models/paginated_list.dart';
 import '../../../auth/data/services/account_api_service.dart';
 import '../models/exam_model.dart';
 import '../models/question_model.dart';
@@ -60,12 +61,19 @@ class ExamApiService {
     return exam?.questionCount ?? 0;
   }
 
-  Future<List<QuestionModel>> getQuestionsBySubject(String subject) async {
+  Future<PaginatedList<QuestionModel>> getQuestionsBySubject(
+    String subject, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
     final response = await _accountApi.getApiJson(
       '/v1/questions',
-      query: {'subject': subject},
+      query: {'subject': subject, 'limit': '$limit', 'offset': '$offset'},
     );
-    return _questions(response);
+    return PaginatedList.fromJson(
+      response,
+      (item) => QuestionModel.fromMap(item, item['id'] as String? ?? ''),
+    );
   }
 
   List<QuestionModel> _questions(dynamic response) {
