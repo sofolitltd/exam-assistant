@@ -20,8 +20,10 @@ class RoutineNotificationService {
     tz_data.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation(await _localTimeZoneName()));
 
+    // A flat white silhouette, per Android's status-bar icon guidelines —
+    // the full-color launcher icon gets masked into an unrecognizable blob.
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
+      '@drawable/ic_stat_notify',
     );
     const iosSettings = DarwinInitializationSettings();
     await _plugin.initialize(
