@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class ExamResultModel {
   final String id;
   final String examId;
@@ -24,17 +22,18 @@ class ExamResultModel {
   double get percentage =>
       totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0.0;
 
-  factory ExamResultModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory ExamResultModel.fromJson(Map<String, dynamic> data) {
     return ExamResultModel(
-      id: doc.id,
+      id: (data['id'] ?? data['resultId'] ?? '').toString(),
       examId: data['examId'] ?? '',
-      score: (data['score'] ?? 0.0).toDouble(),
-      totalQuestions: data['totalQuestions'] ?? 0,
-      correctCount: data['correctCount'] ?? 0,
-      wrongCount: data['wrongCount'] ?? 0,
-      skippedCount: data['skippedCount'] ?? 0,
-      answeredAt: (data['answeredAt'] as dynamic)?.toDate() ?? DateTime.now(),
+      score: (data['score'] as num? ?? 0).toDouble(),
+      totalQuestions: (data['totalQuestions'] as num? ?? 0).toInt(),
+      correctCount: (data['correctCount'] as num? ?? 0).toInt(),
+      wrongCount: (data['wrongCount'] as num? ?? 0).toInt(),
+      skippedCount: (data['skippedCount'] as num? ?? 0).toInt(),
+      answeredAt:
+          DateTime.tryParse(data['answeredAt'] as String? ?? '') ??
+          DateTime.now(),
     );
   }
 }

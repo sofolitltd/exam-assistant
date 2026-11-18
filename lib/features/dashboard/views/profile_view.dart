@@ -1,10 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart' show User;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart' show appRouter;
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../auth/data/models/user_model.dart';
@@ -19,23 +19,24 @@ class ProfileView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(userStatsProvider);
     final examResultsAsync = ref.watch(userExamResultsProvider);
-    final firebaseUser = ref.watch(authServiceProvider).currentUser;
+    final currentUser = ref.watch(authServiceProvider).currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Profile', ),
-      ),
+      appBar: AppBar(title: Text('Profile')),
       body: SingleChildScrollView(
         child: ResponsiveWrapper(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
             child: Column(
               children: [
-                _ProfileCard(statsAsync: statsAsync, firebaseUser: firebaseUser),
+                _ProfileCard(statsAsync: statsAsync, currentUser: currentUser),
                 const SizedBox(height: 16),
-                _PerformanceCard(statsAsync: statsAsync, examResultsAsync: examResultsAsync),
+                _PerformanceCard(
+                  statsAsync: statsAsync,
+                  examResultsAsync: examResultsAsync,
+                ),
                 const SizedBox(height: 16),
-                _AccountCard(firebaseUser: firebaseUser, ref: ref),
+                _AccountCard(ref: ref),
               ],
             ),
           ),
@@ -47,9 +48,9 @@ class ProfileView extends ConsumerWidget {
 
 class _ProfileCard extends StatelessWidget {
   final AsyncValue<UserModel?> statsAsync;
-  final User? firebaseUser;
+  final UserModel? currentUser;
 
-  const _ProfileCard({required this.statsAsync, required this.firebaseUser});
+  const _ProfileCard({required this.statsAsync, required this.currentUser});
 
   @override
   Widget build(BuildContext context) {
@@ -58,14 +59,11 @@ class _ProfileCard extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-width: double.infinity,
+        width: double.infinity,
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const CircleAvatar(
-              radius: 40,
-              child: Icon(Icons.person, size: 40),
-            ),
+            const CircleAvatar(radius: 40, child: Icon(Icons.person, size: 40)),
             const SizedBox(height: 16),
             statsAsync.when(
               data: (user) {
@@ -74,9 +72,7 @@ width: double.infinity,
                     children: [
                       Text(
                         user.name.isNotEmpty ? user.name : ' ',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
+                        style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                         overflow: TextOverflow.ellipsis,
@@ -99,32 +95,29 @@ width: double.infinity,
                   );
                 }
                 return Text(
-                  firebaseUser?.displayName ?? 'User Name',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  currentUser?.name ?? 'User Name',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 );
               },
               loading: () => Text(
-                firebaseUser?.displayName ?? ' ',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                currentUser?.name ?? ' ',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
               error: (_, _) => Text(
-                firebaseUser?.displayName ?? ' ',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                currentUser?.name ?? ' ',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
@@ -169,21 +162,43 @@ class _PerformanceCard extends StatelessWidget {
               return const SizedBox(
                 width: double.infinity,
                 height: 200,
-                child: Center(child: Text('No stats available yet. Take an exam!')));
+                child: Center(
+                  child: Text('No stats available yet. Take an exam!'),
+                ),
+              );
             }
             return Column(
               children: [
                 Row(
                   children: [
-                    Expanded(child: _statItem('Total Exams', stats.totalExamsAttended.toString())),
-                    Expanded(child: _statItem('Highest', stats.highestScore.toStringAsFixed(1))),
-                    Expanded(child: _statItem('Average', stats.averageScore.toStringAsFixed(1))),
+                    Expanded(
+                      child: _statItem(
+                        'Total Exams',
+                        stats.totalExamsAttended.toString(),
+                      ),
+                    ),
+                    Expanded(
+                      child: _statItem(
+                        'Highest',
+                        stats.highestScore.toStringAsFixed(1),
+                      ),
+                    ),
+                    Expanded(
+                      child: _statItem(
+                        'Average',
+                        stats.averageScore.toStringAsFixed(1),
+                      ),
+                    ),
                   ],
                 ),
                 const Divider(height: 40),
                 const Row(
                   children: [
-                    Icon(Icons.trending_up, size: 20, color: Color(0xFF005C53)),
+                    Icon(
+                      Icons.trending_up,
+                      size: 20,
+                      color: AppTheme.primaryColor,
+                    ),
                     SizedBox(width: 8),
                     Text(
                       'Performance Trajectory',
@@ -314,7 +329,7 @@ class _PerformanceCard extends StatelessWidget {
                 LineChartBarData(
                   spots: spots,
                   isCurved: true,
-                  color: const Color(0xFF005C53),
+                  color: AppTheme.primaryColor,
                   barWidth: 3,
                   isStrokeCapRound: true,
                   dotData: FlDotData(
@@ -322,7 +337,7 @@ class _PerformanceCard extends StatelessWidget {
                     getDotPainter: (spot, percent, barData, index) {
                       return FlDotCirclePainter(
                         radius: 5,
-                        color: const Color(0xFF005C53),
+                        color: AppTheme.primaryColor,
                         strokeWidth: 2,
                         strokeColor: Colors.white,
                       );
@@ -334,8 +349,8 @@ class _PerformanceCard extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-const Color(0xFF005C53).withValues(alpha: 0.25),
-const Color(0xFF005C53).withValues(alpha: 0.0),
+                        AppTheme.primaryColor.withValues(alpha: 0.25),
+                        AppTheme.primaryColor.withValues(alpha: 0.0),
                       ],
                     ),
                   ),
@@ -349,10 +364,8 @@ const Color(0xFF005C53).withValues(alpha: 0.0),
         height: 220,
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (e, s) => SizedBox(
-        height: 220,
-        child: Center(child: Text('Error: $e')),
-      ),
+      error: (e, s) =>
+          SizedBox(height: 220, child: Center(child: Text('Error: $e'))),
     );
   }
 
@@ -367,7 +380,7 @@ const Color(0xFF005C53).withValues(alpha: 0.0),
           style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF005C53),
+            color: AppTheme.primaryColor,
           ),
         ),
         const SizedBox(height: 4),
@@ -383,10 +396,9 @@ const Color(0xFF005C53).withValues(alpha: 0.0),
 }
 
 class _AccountCard extends StatelessWidget {
-  final User? firebaseUser;
   final WidgetRef ref;
 
-  const _AccountCard({required this.firebaseUser, required this.ref});
+  const _AccountCard({required this.ref});
 
   @override
   Widget build(BuildContext context) {
@@ -398,25 +410,11 @@ class _AccountCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            if (firebaseUser?.email == 'asifreyad1@gmail.com')
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => context.go('/admin'),
-                    icon: const Icon(Icons.admin_panel_settings),
-                    label: const Text('Admin Panel'),
-                  ),
-                ),
-              ),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () async {
-                  await ref
-                      .read(authControllerProvider.notifier)
-                      .signOut();
+                  await ref.read(authControllerProvider.notifier).signOut();
                   appRouter.go('/login');
                 },
                 icon: const Icon(Icons.logout),

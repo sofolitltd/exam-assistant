@@ -5,10 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tex_text/tex_text.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
+import '../../../core/widgets/option_marker.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../controllers/exam_controller.dart';
-import '../data/services/firestore_exam_service.dart';
+import '../data/services/exam_api_service.dart';
 
 class LiveExamScreen extends ConsumerStatefulWidget {
   final String examId;
@@ -22,6 +25,7 @@ class LiveExamScreen extends ConsumerStatefulWidget {
 class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
   Timer? _timer;
   bool _isLoading = true;
+  String? _loadError;
   String _selectedSubject = 'All';
 
   @override
@@ -32,11 +36,18 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
 
   Future<void> _loadExam() async {
     try {
-      final service = FirestoreQuizService();
+      final service = ExamApiService(
+        accountApi: ref.read(accountApiServiceProvider),
+      );
       final exam = await service.getExam(widget.examId);
       final questions = await service.getExamQuestions(widget.examId);
       if (exam == null || !mounted) {
-        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _loadError = 'Exam not found.';
+          });
+        }
         return;
       }
       ref.read(examControllerProvider.notifier).startExam(exam, questions);
@@ -44,8 +55,13 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
         setState(() => _isLoading = false);
         _startTimer();
       }
-    } catch (_) {
-      if (mounted) setState(() => _isLoading = false);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _loadError = 'Could not load this exam: $error';
+        });
+      }
     }
   }
 
@@ -82,8 +98,29 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_loadError != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_loadError!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _loadError = null;
+                  });
+                  _loadExam();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -107,25 +144,30 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
     final subjectList = subjects.toList()..sort();
 
     final displayIndices = List<int>.generate(questions.length, (i) => i)
-        .where((i) => _selectedSubject == 'All' || questions[i].subject == _selectedSubject)
+        .where(
+          (i) =>
+              _selectedSubject == 'All' ||
+              questions[i].subject == _selectedSubject,
+        )
         .toList();
 
     return Scaffold(
       appBar: AppBar(
         title: Text('$minutes:$seconds ($answeredCount/${questions.length})'),
-     
-     actions: [
-      TextButton(onPressed: 
-        _finishExam
-      , child: Text('Submit', style: TextStyle(color: Colors.white),),),
-     ],
+
+        actions: [
+          TextButton(
+            onPressed: _finishExam,
+            child: Text('Submit', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
-    
+
       body: ResponsiveWrapper(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20,),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
               child: LinearProgressIndicator(
                 value: questions.isEmpty ? 0 : answeredCount / questions.length,
               ),
@@ -134,7 +176,10 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
               height: 48,
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 children: subjectList.map((subject) {
                   final isSelected = subject == _selectedSubject;
                   return Padding(
@@ -145,12 +190,15 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           color: isSelected ? Colors.white : Colors.black87,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
                         ),
                       ),
                       selected: isSelected,
-                      onSelected: (_) => setState(() => _selectedSubject = subject),
-                      selectedColor: const Color(0xFF005C53),
+                      onSelected: (_) =>
+                          setState(() => _selectedSubject = subject),
+                      selectedColor: AppTheme.primaryColor,
                       checkmarkColor: Colors.white,
                       backgroundColor: Colors.grey[100],
                       side: BorderSide.none,
@@ -191,7 +239,7 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
                               CircleAvatar(
                                 radius: 12,
                                 backgroundColor: selected != null
-                                    ? const Color(0xFF005C53)
+                                    ? AppTheme.primaryColor
                                     : Colors.grey[300],
                                 child: Text(
                                   toBanglaNumber(index + 1),
@@ -222,20 +270,16 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
                             const SizedBox(height: 12),
                             const Divider(height: 1),
                             const SizedBox(height: 8),
-                            ...question.options.map((option) {
-                              final isSelected =
-                                  selected == option.key;
+                            ...question.options.indexed.map((entry) {
+                              final (optionIndex, option) = entry;
+                              final isSelected = selected == option.key;
                               return Padding(
-                                padding:
-                                    const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.only(bottom: 8),
                                 child: InkWell(
                                   onTap: () => ref
-                                      .read(examControllerProvider
-                                          .notifier)
-                                      .selectOption(
-                                          index, option.key),
-                                  borderRadius:
-                                      BorderRadius.circular(8),
+                                      .read(examControllerProvider.notifier)
+                                      .selectOption(index, option.key),
+                                  borderRadius: BorderRadius.circular(8),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
@@ -244,46 +288,25 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: isSelected
-                                            ? const Color(0xFF005C53)
+                                            ? AppTheme.primaryColor
                                             : Colors.grey[300]!,
                                         width: isSelected ? 2 : 1,
                                       ),
-                                      borderRadius:
-                                          BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(8),
                                       color: isSelected
-                                          ? const Color(0xFF005C53)
-                                              .withValues(alpha: 0.08)
+                                          ? AppTheme.primaryColor.withValues(
+                                              alpha: 0.08,
+                                            )
                                           : null,
                                     ),
                                     child: Row(
                                       children: [
-                                        SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: DecoratedBox(
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: isSelected
-                                                    ? const Color(
-                                                        0xFF005C53)
-                                                    : Colors.grey[400]!,
-                                                width: 2,
-                                              ),
-                                              color: isSelected
-                                                  ? const Color(
-                                                      0xFF005C53)
-                                                  : null,
-                                            ),
-                                            child: isSelected
-                                                ? const Icon(
-                                                    Icons.check,
-                                                    size: 14,
-                                                    color:
-                                                        Colors.white,
-                                                  )
-                                                : null,
-                                          ),
+                                        OptionMarker(
+                                          index: optionIndex,
+                                          optionKey: option.key,
+                                          state: isSelected
+                                              ? OptionMarkerState.selected
+                                              : OptionMarkerState.neutral,
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
@@ -294,8 +317,7 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
                                             style: TextStyle(
                                               fontSize: 15,
                                               color: isSelected
-                                                  ? const Color(
-                                                      0xFF005C53)
+                                                  ? AppTheme.primaryColor
                                                   : Colors.black87,
                                               fontWeight: isSelected
                                                   ? FontWeight.w500
@@ -322,11 +344,9 @@ class _LiveExamScreenState extends ConsumerState<LiveExamScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _finishExam,
-        backgroundColor: const Color(0xFF005C53),
+        backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
-        label: Text(
-          'Submit ($answeredCount/${questions.length})',
-        ),
+        label: Text('Submit ($answeredCount/${questions.length})'),
         icon: const Icon(Icons.check_circle_outline),
       ),
     );

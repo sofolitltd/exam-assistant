@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Flutter-3.24-blue?logo=flutter" alt="Flutter"/>
-  <img src="https://img.shields.io/badge/Dart-3.12-blue?logo=dart" alt="Dart"/>
-  <img src="https://img.shields.io/badge/Firebase-Integrated-orange?logo=firebase" alt="Firebase"/>
+  <img src="https://img.shields.io/badge/Flutter-3.47.7-blue?logo=flutter" alt="Flutter"/>
+  <img src="https://img.shields.io/badge/Dart-3.13.5-blue?logo=dart" alt="Dart"/>
+  <img src="https://img.shields.io/badge/Database-Neon_Postgres-00E699?logo=neon" alt="Neon Postgres"/>
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License"/>
 </p>
 
@@ -22,9 +22,11 @@
 - **📝 Live Exams** — Timer-based exam sessions with instant results
 - **🧮 LaTeX Math Rendering** — Mathematical expressions rendered inline with `tex_text`
 - **📊 Performance Tracking** — View stats (total exams, highest score, average) with trajectory chart
-- **🔐 Firebase Authentication** — Email/password and Google sign-in
+- **🔐 Account security** — Email/password authentication through the Go API, with bcrypt hashes in Postgres and secure device-side session storage
 - **👤 Profile Management** — Edit profile, view exam history
-- **🛠️ Admin Panel** — Create/manage exams, import questions via JSON, view results
+- **Admin tools** — Use the separate Next.js admin application in `../exam_assistant_admin`
+- **Dynamic syllabi** — Browse BCS, NCTB, bank, and other configured programs and practice by syllabus topic
+- **🗓️ Routine tracking** — Build a personal daily routine (or clone a published template), check in on adherence twice a day, and review a weekly per-block summary of where you're slipping
 - **📱 Responsive Design** — Works on mobile, tablet, and web
 
 ## 📸 Screenshots
@@ -35,8 +37,8 @@
 
 ### Prerequisites
 
-- Flutter SDK 3.24+
-- Firebase project with Authentication, Firestore, and Storage enabled
+- Flutter SDK 3.47.7 (Dart 3.13.5)
+- The Exam Assistant Go API connected to Neon for authentication and app data
 
 ### Installation
 
@@ -48,32 +50,70 @@ cd exam_assistant
 # Install dependencies
 flutter pub get
 
-# Configure Firebase
-# Place your google-services.json (Android) and GoogleService-Info.plist (iOS)
-# in the respective platform directories (already gitignored)
-
 # Run the app
 flutter run
 ```
 
-### Firebase Setup
+### Make targets
 
-1. Create a Firebase project at [firebase.google.com](https://firebase.google.com)
-2. Enable **Email/Password** and **Google** sign-in in Authentication
-3. Create a Firestore database with the following collections:
-   - `users` — User profiles and stats
-   - `exams` — Exam metadata
-   - `questions` — Exam questions
-   - `exam_results` — User exam results
-4. Add your `google-services.json` (Android) and `GoogleService-Info.plist` (iOS)
-5. Run `flutterfire configure` or manually update `lib/firebase_options.dart`
+From the Flutter project directory, use `make run-web` to run in Chrome or
+`make run-android` to run on the first connected Android device/emulator.
+`make setup`, `make analyze`, and `make build-web` install dependencies, analyze
+the app, and build the web target respectively.
+
+The app uses the Go API for registration, login, profiles, exam content,
+notices, results, leaderboard, and syllabus browsing. Passwords are hashed
+with bcrypt by the API; the app stores only the opaque session token in secure
+storage. Set `API_BASE_URL` at build/run time when the API is not reachable at
+`http://localhost:8080`, for example:
+
+```bash
+flutter run --dart-define=API_BASE_URL=https://your-api.example.com
+```
+
+Firebase Authentication, Cloud Firestore, and Cloud Storage are not used by the
+app. Firebase Core remains initialized for future Firebase Cloud Messaging
+integration only. All current user and exam data is served by the Go API from
+Neon Postgres.
+
+### Routine tracking
+
+The routine feature (`lib/features/routine/`) lets a user build a day
+timetable of blocks (study, prayer, meal, rest, other), each with a time
+range and the days of the week it applies to. Users either start from a
+published template (admin-managed, see `exam_assistant_admin`) or build one
+from scratch, then edit it any time from the routine tab.
+
+Reminders are scheduled entirely on-device with `flutter_local_notifications`
+(`lib/features/routine/services/routine_notification_service.dart`) — there is
+no server-side push. Deliberately capped at three notifications a day (two
+check-ins, one weekly summary) to avoid alert fatigue; there is no per-block
+notification. Check-ins are logged through `PUT /v1/routine` and
+`POST /v1/routine/logs` on the Go API, and the weekly summary is fetched (not
+computed client-side) from `GET /v1/routine/summary`.
+
+For a physical Android device using the local API, connect the phone and
+computer to the same network, set `API_ADDR=:8080` in
+`../exam_assistant_api/.env`, and restart the API. Then run `make run-r-l` from
+the Flutter app directory. This target uses the computer's Wi-Fi IP instead of
+`localhost` and checks API reachability before launching the app. Local HTTP is
+allowed only in Android debug builds; use HTTPS for release builds.
+
+### Firebase configuration
+
+Firebase is not required for authentication or app data. Firebase Core is kept
+for planned FCM support; configure `lib/firebase_options.dart` and the platform
+Firebase app files only if using that integration.
+
+Configure the Go API and apply its Neon migrations before running the app.
+Accounts created by the previous Firebase Authentication flow do not have
+Postgres passwords; users should register new accounts for this fresh start.
 
 ## 🏗️ Project Structure
 
 ```
 lib/
 ├── core/
-│   ├── constants/        # App constants (Firestore collection names, etc.)
 │   ├── router/           # GoRouter configuration
 │   ├── theme/            # App theme & colors
 │   └── widgets/          # Reusable widgets (ResponsiveWrapper, etc.)
@@ -87,9 +127,14 @@ lib/
 │   ├── dashboard/        # Main navigation hub & profile view
 │   │   ├── controllers/
 │   │   └── views/
-│   └── exam/             # Exam listing, live exam, results
+│   ├── exam/             # Exam listing, live exam, results
+│   │   ├── controllers/
+│   │   ├── data/
+│   │   └── views/
+│   └── routine/          # Routine builder, daily check-in, weekly summary
 │       ├── controllers/
-│       ├── data/
+│       ├── data/         # Models, RoutineApiService
+│       ├── services/     # Local notification scheduling
 │       └── views/
 └── main.dart
 ```
@@ -99,13 +144,15 @@ lib/
 | Technology | Purpose |
 |---|---|
 | **Flutter** | Cross-platform UI framework |
-| **Firebase Auth** | User authentication |
-| **Cloud Firestore** | NoSQL database |
+| **Neon Postgres** | Accounts, exam content, notices, results, and statistics via the Go API |
+| **bcrypt** | Password hashing in the Go API |
+| **flutter_secure_storage** | Opaque API session token storage |
 | **Riverpod** | State management |
 | **GoRouter** | Declarative routing |
 | **fl_chart** | Performance trajectory charts |
 | **tex_text** | LaTeX math rendering |
 | **Google Fonts** | Typography |
+| **flutter_local_notifications** | On-device routine check-in and weekly summary reminders |
 
 ## 🤝 Contributing
 

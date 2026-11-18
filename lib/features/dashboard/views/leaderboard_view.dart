@@ -1,22 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../../auth/data/models/user_model.dart';
 
-final leaderboardProvider = StreamProvider<List<UserModel>>((ref) {
-  return FirebaseFirestore.instance
-      .collection(AppConstants.usersCollection)
-      .orderBy('highestScore', descending: true)
-      .limit(20)
-      .snapshots()
-      .map(
-        (snapshot) =>
-            snapshot.docs.map((doc) => UserModel.fromFirestore(doc)).toList(),
-      );
+final leaderboardProvider = FutureProvider<List<UserModel>>((ref) async {
+  final user = ref.watch(authStateChangesProvider).value;
+  if (user == null) return [];
+  return ref.read(accountApiServiceProvider).getLeaderboard();
 });
 
 class LeaderboardView extends ConsumerWidget {
@@ -29,7 +22,7 @@ class LeaderboardView extends ConsumerWidget {
     final leaderboardAsync = ref.watch(leaderboardProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text("Leaderboard"),),
+      appBar: AppBar(title: Text("Leaderboard")),
       body: leaderboardAsync.when(
         data: (users) => RefreshIndicator(
           onRefresh: () async => ref.refresh(leaderboardProvider),
@@ -40,7 +33,7 @@ class LeaderboardView extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final user = users[index];
                 final isTopThree = index < 3;
-      
+
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Material(
@@ -91,10 +84,13 @@ class LeaderboardView extends ConsumerWidget {
                                   const SizedBox(height: 4),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.primaryColor
-                                          .withValues(alpha: 0.1),
+                                      color: AppTheme.primaryColor.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Text(

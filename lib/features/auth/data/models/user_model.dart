@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class UserModel {
   final String uid;
   final String name;
@@ -21,31 +19,19 @@ class UserModel {
     this.updatedAt,
   });
 
-  bool get isProfileComplete => name.isNotEmpty && phone.isNotEmpty;
+  // Matches the website: phone is optional and editable from the profile.
+  bool get isProfileComplete => name.isNotEmpty;
 
-  factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory UserModel.fromJson(Map<String, dynamic> data) {
     return UserModel(
-      uid: doc.id,
+      uid: data['uid'] as String? ?? '',
       name: data['name'] ?? '',
       email: data['email'] ?? '',
       phone: data['phone'] ?? '',
-      totalExamsAttended: data['totalExamsAttended'] ?? 0,
-      highestScore: (data['highestScore'] ?? 0.0).toDouble(),
-      averageScore: (data['averageScore'] ?? 0.0).toDouble(),
-      updatedAt: (data['updatedAt'] as dynamic)?.toDate(),
+      totalExamsAttended: (data['totalExamsAttended'] as num? ?? 0).toInt(),
+      highestScore: (data['highestScore'] as num? ?? 0).toDouble(),
+      averageScore: (data['averageScore'] as num? ?? 0).toDouble(),
+      updatedAt: DateTime.tryParse(data['updatedAt'] as String? ?? ''),
     );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'email': email,
-      'phone': phone,
-      'totalExamsAttended': totalExamsAttended,
-      'highestScore': highestScore,
-      'averageScore': averageScore,
-      'updatedAt': updatedAt ?? FieldValue.serverTimestamp(),
-    };
   }
 }

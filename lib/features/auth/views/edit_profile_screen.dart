@@ -28,8 +28,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userDoc = ref.watch(userDocStreamProvider);
-    final currentUser = userDoc.asData?.value;
+    final userProfile = ref.watch(userProfileProvider);
+    final currentUser = userProfile.asData?.value;
 
     if (!_loaded && currentUser != null) {
       _nameController.text = currentUser.name;
@@ -39,7 +39,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Edit Profile')),
-      body: userDoc.when(
+      body: userProfile.when(
         data: (_) => ResponsiveWrapper(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -54,10 +54,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   Text(
                     'Edit Your Profile',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 32),
                   TextFormField(
@@ -67,8 +66,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       prefixIcon: Icon(Icons.person),
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Name is required'
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -79,8 +79,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       prefixIcon: Icon(Icons.phone),
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Phone is required' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Phone is required'
+                        : null,
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
@@ -111,17 +112,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final authService = ref.read(authServiceProvider);
       final user = authService.currentUser;
       if (user == null) return;
-      await authService.updateUserProfile(
-        uid: user.uid,
+      await authService.updateProfile(
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
       );
+      ref.invalidate(userProfileProvider);
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

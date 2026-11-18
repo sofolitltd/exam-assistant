@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart' show usePathUrlStrategy;
 import 'package:go_router/go_router.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/controllers/auth_controller.dart';
+import 'features/routine/controllers/routine_controller.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -26,14 +26,6 @@ void main() async {
     debugPrint('Firebase initialization failed: $e');
   }
 
-  if (!kIsWeb) {
-    try {
-      await GoogleSignIn.instance.initialize();
-    } catch (e) {
-      debugPrint('GoogleSignIn initialization failed: $e');
-    }
-  }
-
   runApp(const ProviderScope(child: ExamAssistantApp()));
 }
 
@@ -46,22 +38,37 @@ class ExamAssistantApp extends ConsumerStatefulWidget {
 
 class _ExamAssistantAppState extends ConsumerState<ExamAssistantApp> {
   bool _redirected = false;
+  bool _notificationsArmed = false;
 
   @override
   void initState() {
     super.initState();
     ref.listenManual(authStateChangesProvider, (_, next) {
-      next.whenOrNull(data: (user) {
-        if (user == null && !_redirected) {
-          _redirected = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            appRouter.go('/login');
-          });
-        } else if (user != null) {
-          _redirected = false;
-        }
-      });
+      next.whenOrNull(
+        data: (user) {
+          if (user == null && !_redirected) {
+            _redirected = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              appRouter.go('/login');
+            });
+          } else if (user != null) {
+            _redirected = false;
+            if (!_notificationsArmed) {
+              _notificationsArmed = true;
+              _armRoutineReminders();
+            }
+          }
+        },
+      );
     });
+  }
+
+  Future<void> _armRoutineReminders() async {
+    final notifications = ref.read(routineNotificationServiceProvider);
+    final granted = await notifications.requestPermission();
+    if (granted) {
+      await notifications.scheduleRoutineReminders();
+    }
   }
 
   @override

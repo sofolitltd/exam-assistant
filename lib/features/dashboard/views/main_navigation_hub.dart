@@ -14,9 +14,10 @@ class MainNavigationHub extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).matchedLocation;
     int selectedIndex = 0;
-    if (location.startsWith('/leaderboard')) selectedIndex = 1;
-    if (location.startsWith('/notices')) selectedIndex = 2;
-    if (location.startsWith('/profile')) selectedIndex = 3;
+    if (location.startsWith('/routine')) selectedIndex = 1;
+    if (location.startsWith('/leaderboard')) selectedIndex = 2;
+    if (location.startsWith('/notices')) selectedIndex = 3;
+    if (location.startsWith('/profile')) selectedIndex = 4;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -39,10 +40,12 @@ class MainNavigationHub extends ConsumerWidget {
                 case 0:
                   context.go('/home');
                 case 1:
-                  context.go('/leaderboard');
+                  context.go('/routine');
                 case 2:
-                  context.go('/notices');
+                  context.go('/leaderboard');
                 case 3:
+                  context.go('/notices');
+                case 4:
                   context.go('/profile');
               }
             },
@@ -76,6 +79,10 @@ class MainNavigationHub extends ConsumerWidget {
                 label: Text('Home'),
               ),
               NavigationRailDestination(
+                icon: Icon(LucideIcons.listChecks),
+                label: Text('Routine'),
+              ),
+              NavigationRailDestination(
                 icon: Icon(LucideIcons.trophy),
                 label: Text('Leaderboard'),
               ),
@@ -107,15 +114,21 @@ class MainNavigationHub extends ConsumerWidget {
               case 0:
                 context.go('/home');
               case 1:
-                context.go('/leaderboard');
+                context.go('/routine');
               case 2:
-                context.go('/notices');
+                context.go('/leaderboard');
               case 3:
+                context.go('/notices');
+              case 4:
                 context.go('/profile');
             }
           },
           destinations: const [
             NavigationDestination(icon: Icon(LucideIcons.home), label: 'Home'),
+            NavigationDestination(
+              icon: Icon(LucideIcons.listChecks),
+              label: 'Routine',
+            ),
             NavigationDestination(
               icon: Icon(LucideIcons.trophy),
               label: 'Leaderboard',

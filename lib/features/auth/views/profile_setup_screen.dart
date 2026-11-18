@@ -9,8 +9,7 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
 
   @override
-  ConsumerState<ProfileSetupScreen> createState() =>
-      _ProfileSetupScreenState();
+  ConsumerState<ProfileSetupScreen> createState() => _ProfileSetupScreenState();
 }
 
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
@@ -33,17 +32,17 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       final authService = ref.read(authServiceProvider);
       final user = authService.currentUser;
       if (user == null) return;
-      await authService.updateUserProfile(
-        uid: user.uid,
+      await authService.updateProfile(
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
       );
+      ref.invalidate(userProfileProvider);
       if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -69,8 +68,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   Text(
                     'Complete Your Profile',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -86,8 +86,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       prefixIcon: Icon(Icons.person),
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Name is required'
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -98,8 +99,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       prefixIcon: Icon(Icons.phone),
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Phone is required' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Phone is required'
+                        : null,
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(

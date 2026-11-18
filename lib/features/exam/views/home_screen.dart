@@ -1,80 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../learning/widgets/learning_shortcuts.dart';
 import '../controllers/exam_controller.dart';
 import '../data/models/exam_model.dart';
-import '../data/services/firestore_exam_service.dart';
+import '../data/services/exam_api_service.dart';
+import '../data/services/taxonomy_api_service.dart';
 
 class _ExamWithCount {
   final ExamModel exam;
   final int questionCount;
-  _ExamWithCount(this.exam, this.questionCount);
+
+  const _ExamWithCount(this.exam, this.questionCount);
 }
 
 final recentExamsProvider = FutureProvider<List<_ExamWithCount>>((ref) async {
-  final service = FirestoreQuizService();
+  final service = ExamApiService(
+    accountApi: ref.watch(accountApiServiceProvider),
+  );
   final exams = await service.getRecentExams(5, publishedOnly: true);
-  final result = <_ExamWithCount>[];
-  for (final exam in exams) {
-    final count = await service.getExamQuestionCount(exam.examId);
-    result.add(_ExamWithCount(exam, count));
-  }
-  return result;
+  return exams.map((exam) => _ExamWithCount(exam, exam.questionCount)).toList();
 });
 
-const _subjects = [
-  'Bangla',
-  'English',
-  'Mathematics',
-  'Science',
-  'International Affairs',
-  'Geography',
-  'Bangladesh Affairs',
-  'Islam & Moral Education',
-  'ICT',
-  'Mental Ability',
-];
-
-final questionCountsProvider = FutureProvider<Map<String, int>>((ref) async {
-  final service = FirestoreQuizService();
-  final counts = <String, int>{};
-  for (final subject in _subjects) {
-    final questions = await service.getQuestionsBySubject(subject);
-    counts[subject] = questions.length;
-  }
-  return counts;
+final taxonomyProgramsProvider = FutureProvider((ref) {
+  return TaxonomyApiService(
+    accountApi: ref.watch(accountApiServiceProvider),
+  ).getPrograms();
 });
-
-IconData _subjectIcon(String subject) {
-  switch (subject) {
-    case 'Bangla':
-    case 'English':
-      return LucideIcons.book;
-    case 'Mathematics':
-      return LucideIcons.sigma;
-    case 'Science':
-      return Icons.science_outlined;
-    case 'International Affairs':
-      return LucideIcons.users;
-    case 'Geography':
-      return LucideIcons.globe;
-    case 'Bangladesh Affairs':
-      return LucideIcons.landmark;
-    case 'Islam & Moral Education':
-      return Icons.mosque_outlined;
-    case 'ICT':
-      return LucideIcons.monitor;
-    case 'Mental Ability':
-      return LucideIcons.brain;
-    default:
-      return LucideIcons.book;
-  }
-}
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -84,101 +41,181 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
   String? _expandedExamId;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final examsAsync = ref.watch(recentExamsProvider);
-    final countsAsync = ref.watch(questionCountsProvider);
-    final counts = countsAsync.asData?.value ?? const <String, int>{};
+    final programsAsync = ref.watch(taxonomyProgramsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text("Exam Assistant")),
-      body: ResponsiveWrapper(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              examsAsync.when(
-                data: (exams) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _sectionHeader(
-                        'Latest Exams',
-                        LucideIcons.zap,
-                        trailing: TextButton(
-                          onPressed: () => context.push('/all-exams'),
-                          child: const Text('See More'),
+      backgroundColor: const Color(0xFFF5F8F7),
+      body: SafeArea(
+        child: ResponsiveWrapper(
+          child: CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _buildTopBar(context),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(
+                      title: 'Find your exam',
+                      subtitle: 'Choose a program to explore its syllabus.',
+                      trailing: programsAsync.whenOrNull(
+                        data: (programs) => _CountBadge(
+                          count: programs.length,
+                          label: 'programs',
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      if (exams.isEmpty)
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 32),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  LucideIcons.file,
-                                  size: 48,
-                                  color: Colors.grey[300],
+                    ),
+                    const SizedBox(height: 14),
+                    _buildSearchField(),
+                    const SizedBox(height: 14),
+                    const LearningShortcuts(),
+                    const SizedBox(height: 14),
+                    programsAsync.when(
+                      data: (programs) {
+                        final filteredPrograms = programs.where((program) {
+                          final query = _searchQuery.trim().toLowerCase();
+                          return query.isEmpty ||
+                              program.code.toLowerCase().contains(query) ||
+                              program.name.toLowerCase().contains(query);
+                        }).toList();
+
+                        if (programs.isEmpty) {
+                          return _EmptyState(
+                            icon: LucideIcons.bookOpen,
+                            title: 'Exam programs are on the way',
+                            message:
+                                'There are no programs to explore right now.',
+                          );
+                        }
+                        if (filteredPrograms.isEmpty) {
+                          return _EmptyState(
+                            icon: LucideIcons.search,
+                            title: 'No matching exams',
+                            message: 'Try another exam name or program code.',
+                          );
+                        }
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            final columns = constraints.maxWidth >= 620 ? 2 : 1;
+                            final rows = <Widget>[];
+                            for (
+                              var index = 0;
+                              index < filteredPrograms.length;
+                              index += columns
+                            ) {
+                              final rowPrograms = filteredPrograms
+                                  .skip(index)
+                                  .take(columns)
+                                  .toList();
+                              rows.add(
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    for (
+                                      var itemIndex = 0;
+                                      itemIndex < rowPrograms.length;
+                                      itemIndex++
+                                    ) ...[
+                                      if (itemIndex > 0)
+                                        const SizedBox(width: 12),
+                                      Expanded(
+                                        child: _ProgramCard(
+                                          program: rowPrograms[itemIndex],
+                                          index: index + itemIndex,
+                                        ),
+                                      ),
+                                    ],
+                                    if (rowPrograms.length < columns)
+                                      const Spacer(),
+                                  ],
                                 ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'No exams available yet',
-                                  style: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontSize: 15,
+                              );
+                              if (index + columns < filteredPrograms.length) {
+                                rows.add(const SizedBox(height: 12));
+                              }
+                            }
+                            return Column(children: rows);
+                          },
+                        );
+                      },
+                      loading: () => const _LoadingPanel(
+                        label: 'Loading exam programs...',
+                      ),
+                      error: (error, _) => _ErrorPanel(
+                        message: 'Could not load exam programs.',
+                        onRetry: () => ref.invalidate(taxonomyProgramsProvider),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    _buildSectionHeader(
+                      title: 'Latest exams',
+                      subtitle: 'Review the details before you begin.',
+                      trailing: TextButton(
+                        onPressed: () => context.push('/all-exams'),
+                        child: const Text('View all'),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    examsAsync.when(
+                      data: (exams) {
+                        if (exams.isEmpty) {
+                          return _EmptyState(
+                            icon: LucideIcons.fileQuestion,
+                            title: 'No exams available yet',
+                            message:
+                                'Published exams will appear here when ready.',
+                          );
+                        }
+                        return Column(
+                          children: exams
+                              .map(
+                                (item) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _ExamCard(
+                                    item: item,
+                                    isExpanded:
+                                        _expandedExamId == item.exam.examId,
+                                    onTap: () => setState(
+                                      () => _expandedExamId =
+                                          _expandedExamId == item.exam.examId
+                                          ? null
+                                          : item.exam.examId,
+                                    ),
+                                    onStart: () =>
+                                        _startExam(context, item.exam),
+                                    onViewAnswerKey: () => context.push(
+                                      '/exam/${item.exam.examId}/answers'
+                                      '?title=${Uri.encodeQueryComponent(item.exam.title)}',
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else
-                        ...exams.map(
-                          (e) => _buildExamCard(
-                            context,
-                            ref,
-                            e.exam,
-                            e.questionCount,
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-                    ],
-                  );
-                },
-                loading: () => const Padding(
-                  padding: EdgeInsets.only(bottom: 24),
-                  child: Center(child: CircularProgressIndicator()),
+                              )
+                              .toList(),
+                        );
+                      },
+                      loading: () => const _LoadingPanel(
+                        label: 'Loading the latest exams...',
+                      ),
+                      error: (error, _) => _ErrorPanel(
+                        message: 'Could not load the latest exams.',
+                        onRetry: () => ref.invalidate(recentExamsProvider),
+                      ),
+                    ),
+                  ]),
                 ),
-                error: (_, _) => const SizedBox(),
-              ),
-              _sectionHeader('Practice by Subject', LucideIcons.book),
-              const SizedBox(height: 12),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final crossAxisCount = constraints.maxWidth >= 900
-                      ? 4
-                      : constraints.maxWidth >= 600
-                      ? 3
-                      : 2;
-                  return MasonryGridView.count(
-                    crossAxisCount: crossAxisCount,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _subjects.length,
-                    itemBuilder: (context, index) {
-                      final subject = _subjects[index];
-                      final count = counts[subject] ?? 0;
-                      return _buildSubjectCard(context, subject, count);
-                    },
-                  );
-                },
               ),
             ],
           ),
@@ -187,15 +224,92 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _sectionHeader(String title, IconData icon, {Widget? trailing}) {
+  Widget _buildTopBar(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: AppTheme.primaryColor),
-        const SizedBox(width: 8),
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Icon(
+            LucideIcons.graduationCap,
+            color: Colors.white,
+            size: 23,
+          ),
+        ),
+        const SizedBox(width: 11),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'EXAM ASSISTANT',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.15,
+                ),
+              ),
+              SizedBox(height: 2),
+              Text(
+                'Your study space',
+                style: TextStyle(
+                  color: Color(0xFF687773),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: 'Profile',
+          onPressed: () => context.go('/profile'),
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: AppTheme.primaryColor,
+            fixedSize: const Size(44, 44),
+          ),
+          icon: const Icon(LucideIcons.userRound, size: 20),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required String subtitle,
+    Widget? trailing,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
         Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Color(0xFF1E302C),
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Color(0xFF71807C),
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+            ],
           ),
         ),
         ?trailing,
@@ -203,252 +317,551 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildExamCard(
-    BuildContext context,
-    WidgetRef ref,
-    ExamModel exam,
-    int questionCount,
-  ) {
-    final isExpanded = _expandedExamId == exam.examId;
-    final minutes = exam.durationSeconds ~/ 60;
-    final hours = minutes ~/ 60;
-    final mins = minutes % 60;
-    final timeStr = hours > 0 ? '${hours}h $mins m' : '$mins min';
-
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOut,
-        child: GestureDetector(
-          onTap: () => setState(() => _expandedExamId = isExpanded ? null : exam.examId),
-          child: Container(
-            margin: .only(bottom: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        LucideIcons.file,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  exam.title.isNotEmpty ? exam.title : ' ',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              if(exam.scheduledDate != null)
-                              Text(
-                                "(${_formatDate(exam.scheduledDate!)})",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text(
-                                timeStr,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Text(
-                                '  ·  ',
-                                style: TextStyle(
-                                  color: Colors.grey[400],
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Text(
-                                '$questionCount questions',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    AnimatedRotation(
-                      turns: isExpanded ? 0.25 : 0,
-                      duration: const Duration(milliseconds: 200),
-                      child: Icon(Icons.chevron_right, size: 20, color: Colors.grey[400]),
-                    ),
-                  ],
-                ),
-                if (isExpanded) ...[
-                  const Divider(height: 24),
-                  _detailRow(Icons.timer_outlined, 'Duration: ${exam.durationSeconds ~/ 60} minutes'),
-                  const SizedBox(height: 6),
-                  _detailRow(Icons.quiz_outlined, 'Questions: $questionCount'),
-                  const SizedBox(height: 6),
-                  _detailRow(
-                    Icons.remove_circle_outline,
-                    'Negative: ${exam.negativeMarks} per wrong answer',
-                  ),
-                  if (exam.scheduledDate != null) ...[
-                    const SizedBox(height: 6),
-                    _detailRow(Icons.date_range, 'Date: ${_formatDate(exam.scheduledDate!)}'),
-                  ],
-                  if (exam.isPublished) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(Icons.check_circle, size: 18, color: Colors.green[600]),
-                        const SizedBox(width: 6),
-                        Text('Published', style: TextStyle(color: Colors.green[600])),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => _startExam(context, ref, exam),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text('Start Exam', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                ],
-              ],
-            ),
+  Widget _buildSearchField() {
+    return TextField(
+      controller: _searchController,
+      onChanged: (value) => setState(() => _searchQuery = value),
+      textInputAction: TextInputAction.search,
+      decoration: InputDecoration(
+        hintText: 'Search exam name or code',
+        prefixIcon: const Icon(LucideIcons.search, size: 19),
+        suffixIcon: _searchQuery.isEmpty
+            ? null
+            : IconButton(
+                tooltip: 'Clear search',
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() => _searchQuery = '');
+                },
+                icon: const Icon(Icons.close, size: 18),
+              ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 15),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: Color(0xFFE3EAE7)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(color: Color(0xFFE3EAE7)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(
+            color: AppTheme.primaryColor,
+            width: 1.5,
           ),
         ),
-      
+      ),
     );
   }
 
-  String _formatDate(DateTime dt) {
-    return '${dt.day}/${dt.month}/${dt.year}';
-  }
-
-  Future<void> _startExam(BuildContext context, WidgetRef ref, ExamModel exam) async {
-    final service = FirestoreQuizService();
-    final questions = await service.getExamQuestions(exam.examId);
-    if (questions.isEmpty) {
-      if (context.mounted) {
+  Future<void> _startExam(BuildContext context, ExamModel exam) async {
+    try {
+      final questions = await ExamApiService(
+        accountApi: ref.read(accountApiServiceProvider),
+      ).getExamQuestions(exam.examId);
+      if (!context.mounted) return;
+      if (questions.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('No questions in this exam')),
         );
+        return;
       }
-      return;
+      ref.read(examControllerProvider.notifier).startExam(exam, questions);
+      context.push('/exam/${exam.examId}');
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not start this exam: $error')),
+      );
     }
-    if (!context.mounted) return;
-    ref.read(examControllerProvider.notifier).startExam(exam, questions);
-    if (context.mounted) context.push('/exam/${exam.examId}');
   }
+}
 
-  Widget _detailRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: Colors.grey[600]),
-        const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontSize: 14)),
-      ],
-    );
-  }
+class _ProgramCard extends StatelessWidget {
+  final ExamProgram program;
+  final int index;
 
-  Widget _buildSubjectCard(
-    BuildContext context,
-    String subject,
-    int questionCount,
-  ) {
+  const _ProgramCard({required this.program, required this.index});
+
+  static const _colors = [
+    Color(0xFFEAF4EF),
+    Color(0xFFEEF0FA),
+    Color(0xFFFFF3E7),
+    Color(0xFFE9F3F6),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colors[index % _colors.length];
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push('/subject/$subject'),
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => context.push('/program/${program.programId}'),
         child: Container(
+          constraints: const BoxConstraints(minHeight: 92),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE8EEEB)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  color: color,
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                child: Icon(
-                  _subjectIcon(subject),
-                  size: 20,
+                child: const Icon(
+                  LucideIcons.bookOpen,
                   color: AppTheme.primaryColor,
+                  size: 21,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        subject,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    Text(
+                      program.code,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF273A35),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
-                      '$questionCount questions',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      program.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF76827F),
+                        fontSize: 12,
+                        height: 1.3,
+                      ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 5),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Color(0xFF91A09B),
+                size: 15,
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ExamCard extends StatelessWidget {
+  final _ExamWithCount item;
+  final bool isExpanded;
+  final VoidCallback onTap;
+  final VoidCallback onStart;
+  final VoidCallback onViewAnswerKey;
+
+  const _ExamCard({
+    required this.item,
+    required this.isExpanded,
+    required this.onTap,
+    required this.onStart,
+    required this.onViewAnswerKey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final exam = item.exam;
+    final durationMinutes = exam.durationSeconds ~/ 60;
+    final duration = durationMinutes >= 60
+        ? '${durationMinutes ~/ 60}h ${durationMinutes % 60}m'
+        : '$durationMinutes min';
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOut,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE6ECE9)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF4EF),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        LucideIcons.fileText,
+                        color: AppTheme.primaryColor,
+                        size: 21,
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            exam.title.isEmpty ? 'Untitled exam' : exam.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF253631),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 7),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 5,
+                            children: [
+                              _InlineInfo(
+                                icon: LucideIcons.clock3,
+                                label: duration,
+                              ),
+                              _InlineInfo(
+                                icon: LucideIcons.listChecks,
+                                label: '${item.questionCount} questions',
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    AnimatedRotation(
+                      turns: isExpanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF75847F),
+                      ),
+                    ),
+                  ],
+                ),
+                if (isExpanded) ...[
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                    child: Divider(height: 1, color: Color(0xFFEDF1EF)),
+                  ),
+                  _DetailRow(
+                    icon: LucideIcons.timer,
+                    label: 'Time limit',
+                    value: '$durationMinutes minutes',
+                  ),
+                  const SizedBox(height: 11),
+                  _DetailRow(
+                    icon: LucideIcons.circleHelp,
+                    label: 'Questions',
+                    value: '${item.questionCount}',
+                  ),
+                  const SizedBox(height: 11),
+                  _DetailRow(
+                    icon: LucideIcons.circleMinus,
+                    label: 'Negative marking',
+                    value: '${exam.negativeMarks} per wrong answer',
+                  ),
+                  if (exam.scheduledDate != null) ...[
+                    const SizedBox(height: 11),
+                    _DetailRow(
+                      icon: LucideIcons.calendarDays,
+                      label: 'Scheduled',
+                      value: _formatDate(exam.scheduledDate!),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  if (exam.hasEnded) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: onViewAnswerKey,
+                        icon: const Icon(LucideIcons.bookOpenCheck, size: 17),
+                        label: const Text('View full answer key'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: onStart,
+                        icon: const Icon(LucideIcons.play, size: 17),
+                        label: const Text('Retake exam'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                          minimumSize: const Size.fromHeight(48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ] else
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: onStart,
+                        icon: const Icon(LucideIcons.play, size: 17),
+                        label: const Text('Start exam'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(48),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) => '${date.day}/${date.month}/${date.year}';
+}
+
+class _InlineInfo extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _InlineInfo({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: const Color(0xFF82908C)),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Color(0xFF71807B)),
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 17, color: AppTheme.primaryColor),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF687772)),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF33443F),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CountBadge extends StatelessWidget {
+  final int count;
+  final String label;
+
+  const _CountBadge({required this.count, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF2EE),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Text(
+        '$count $label',
+        style: const TextStyle(
+          color: AppTheme.primaryColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE8EEEB)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: const Color(0xFF80918B), size: 25),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF33443F),
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF788681),
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoadingPanel extends StatelessWidget {
+  final String label;
+
+  const _LoadingPanel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            label,
+            style: const TextStyle(color: Color(0xFF73817D), fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorPanel extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorPanel({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE8EEEB)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            LucideIcons.circleAlert,
+            color: Color(0xFFB85444),
+            size: 21,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Color(0xFF5E6C67), fontSize: 13),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
       ),
     );
   }

@@ -1,15 +1,18 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_constants.dart';
+import '../../auth/controllers/auth_controller.dart';
 
-final noticesProvider = StreamProvider<List<Notice>>((ref) {
-  return FirebaseFirestore.instance
-      .collection(AppConstants.noticesCollection)
-      .orderBy('createdAt', descending: true)
-      .snapshots()
-      .map((snap) => snap.docs.map((d) => Notice.fromDoc(d)).toList());
+final noticesProvider = FutureProvider<List<Notice>>((ref) async {
+  final response = await ref
+      .read(accountApiServiceProvider)
+      .getApiJson('/v1/notices');
+  if (response is! List) {
+    throw const FormatException('Expected a notices list response.');
+  }
+  return response
+      .map((item) => Notice.fromJson(Map<String, dynamic>.from(item as Map)))
+      .toList();
 });
 
 class Notice {
@@ -25,13 +28,14 @@ class Notice {
     required this.createdAt,
   });
 
-  factory Notice.fromDoc(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory Notice.fromJson(Map<String, dynamic> data) {
     return Notice(
-      id: doc.id,
+      id: data['id'] as String? ?? '',
       title: data['title'] ?? '',
       body: data['body'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt:
+          DateTime.tryParse(data['createdAt'] as String? ?? '') ??
+          DateTime.now(),
     );
   }
 }
@@ -49,8 +53,10 @@ class NoticesScreen extends ConsumerWidget {
         data: (notices) {
           if (notices.isEmpty) {
             return const Center(
-              child: Text('No notices yet.',
-                  style: TextStyle(color: Colors.grey, fontSize: 16)),
+              child: Text(
+                'No notices yet.',
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
             );
           }
           return ListView.builder(
@@ -72,9 +78,7 @@ class NoticesScreen extends ConsumerWidget {
                     children: [
                       Text(
                         notice.title,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
+                        style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),

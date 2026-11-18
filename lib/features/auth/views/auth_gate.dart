@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../controllers/auth_controller.dart';
-import '../data/services/firebase_auth_service.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -22,17 +21,11 @@ class AuthGate extends ConsumerWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        final userDoc = ref.watch(userDocStreamProvider);
-        return userDoc.when(
+        final userProfile = ref.watch(userProfileProvider);
+        return userProfile.when(
           data: (u) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!context.mounted) return;
-              if (u == null) {
-                FirebaseAuthService().saveUserToFirestore(
-                  user,
-                  name: user.displayName ?? '',
-                );
-              }
               if (u?.isProfileComplete ?? false) {
                 context.go('/home');
               } else {
@@ -43,11 +36,25 @@ class AuthGate extends ConsumerWidget {
               body: Center(child: CircularProgressIndicator()),
             );
           },
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (err, _) => Scaffold(
-            body: Center(child: Text('Profile error: $err')),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Could not load your account: $err'),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: () => ref.invalidate(userProfileProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         );
       },
