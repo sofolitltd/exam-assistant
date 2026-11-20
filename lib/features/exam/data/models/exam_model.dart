@@ -10,6 +10,14 @@ class ExamModel {
   final DateTime createdAt;
   final int questionCount;
 
+  /// pyq (a real past paper), model or live.
+  final String kind;
+  final int? syllabusId;
+
+  /// The BCS number for a past paper (44 for ৪৪তম), if set.
+  final int? editionNumber;
+  final DateTime? heldOn;
+
   ExamModel({
     required this.examId,
     required this.title,
@@ -18,6 +26,10 @@ class ExamModel {
     this.status = ExamStatus.draft,
     this.scheduledDate,
     this.questionCount = 0,
+    this.kind = 'model',
+    this.syllabusId,
+    this.editionNumber,
+    this.heldOn,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -40,6 +52,10 @@ class ExamModel {
           : ExamStatus.draft,
       scheduledDate: scheduledDate,
       questionCount: (map['questionCount'] as num? ?? 0).toInt(),
+      kind: map['kind'] as String? ?? 'model',
+      syllabusId: (map['syllabusId'] as num?)?.toInt(),
+      editionNumber: (map['editionNumber'] as num?)?.toInt(),
+      heldOn: DateTime.tryParse(map['heldOn'] as String? ?? ''),
       createdAt: createdAt,
     );
   }

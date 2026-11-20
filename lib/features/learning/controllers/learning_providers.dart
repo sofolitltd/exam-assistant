@@ -46,3 +46,12 @@ final subjectPerformanceProvider =
     FutureProvider.autoDispose<List<SubjectPerformance>>((ref) {
       return ref.read(learningApiServiceProvider).getSubjectPerformance();
     });
+
+/// Subject accuracy over the last [days] days (use a large number for
+/// "all time"), as returned by the API.
+final subjectPerformanceByDaysProvider = FutureProvider.autoDispose
+    .family<List<SubjectPerformance>, int>((ref, days) {
+      return ref
+          .read(learningApiServiceProvider)
+          .getSubjectPerformance(days: days);
+    });

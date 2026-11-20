@@ -20,8 +20,9 @@ class SubjectQuestionsNotifier extends PagedNotifier<QuestionModel> {
 
   @override
   Future<PaginatedList<QuestionModel>> fetchPage(int limit, int offset) {
-    return ExamApiService(accountApi: ref.read(accountApiServiceProvider))
-        .getQuestionsBySubject(subject, limit: limit, offset: offset);
+    return ExamApiService(
+      accountApi: ref.read(accountApiServiceProvider),
+    ).getQuestionsBySubject(subject, limit: limit, offset: offset);
   }
 }
 
@@ -42,13 +43,14 @@ class TaxonomyQuestionsNotifier extends PagedNotifier<QuestionModel> {
 
   @override
   Future<PaginatedList<QuestionModel>> fetchPage(int limit, int offset) {
-    return TaxonomyApiService(accountApi: ref.read(accountApiServiceProvider))
-        .getQuestionBank(
-          syllabusId: key.$1,
-          nodeId: key.$2,
-          limit: limit,
-          offset: offset,
-        );
+    return TaxonomyApiService(
+      accountApi: ref.read(accountApiServiceProvider),
+    ).getQuestionBank(
+      syllabusId: key.$1,
+      nodeId: key.$2,
+      limit: limit,
+      offset: offset,
+    );
   }
 }
 

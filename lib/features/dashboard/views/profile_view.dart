@@ -1,430 +1,506 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/router/app_router.dart' show appRouter;
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/responsive_wrapper.dart';
+import '../../../core/utils/bangla_digits.dart';
+import '../../../core/widgets/ds.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../auth/data/models/user_model.dart';
-import '../../exam/data/models/exam_result_model.dart';
-
+import '../../auth/data/target_exam.dart';
+import '../../bcs/data/bcs_api.dart';
+import '../../bcs/data/bcs_models.dart';
+import '../../bcs/views/bcs_format.dart';
+import '../../learning/controllers/learning_providers.dart';
+import '../../learning/data/learning_models.dart';
+import '../../learning/widgets/accuracy_chart.dart';
+import '../../routine/controllers/routine_controller.dart';
 import '../controllers/stats_controller.dart';
 
+/// প্রোফাইল: who you are and your goal, four numbers, the recent trend,
+/// your three weakest subjects, then everything else.
 class ProfileView extends ConsumerWidget {
   const ProfileView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(userStatsProvider);
-    final examResultsAsync = ref.watch(userExamResultsProvider);
-    final currentUser = ref.watch(authServiceProvider).currentUser;
+    final user = ref.watch(userStatsProvider).value;
+    final results = [...?ref.watch(userExamResultsProvider).value]
+      ..sort((a, b) => a.answeredAt.compareTo(b.answeredAt));
+    final streak = ref.watch(streakProvider).value;
+    final subjectsAsync = ref.watch(subjectPerformanceByDaysProvider(30));
+    final mistakes = ref.watch(mistakesProvider(null));
+    final target = BcsEdition(
+      number: ref.watch(bcsRunningNumberProvider),
+      status: EditionStatus.running,
+    );
+    final goalId = ref.watch(targetExamProvider).value;
+    final goalLabel = goalId == null || goalId == 'bcs'
+        ? '${editionName(target.number)} প্রিলিমিনারি'
+        : targetExamById(goalId).label;
+
+    final pcts = [for (final r in results) r.percentage];
+    final avg = pcts.isEmpty
+        ? null
+        : pcts.reduce((a, b) => a + b) / pcts.length;
+    final best = pcts.isEmpty ? null : pcts.reduce((a, b) => a > b ? a : b);
+    final last10 = pcts.length > 10 ? pcts.sublist(pcts.length - 10) : pcts;
+
+    final subjects = [...?subjectsAsync.value?.where((s) => s.attempted > 0)]
+      ..sort((a, b) => a.accuracy.compareTo(b.accuracy));
+    final weakest = subjects.take(3).toList();
+
+    final name = user?.name.isNotEmpty == true ? user!.name : 'নাম নেই';
+    final contact = user == null
+        ? ''
+        : user.phone.isNotEmpty
+        ? bn(user.phone)
+        : user.email;
+
+    final mistakesText = mistakes.items.isEmpty
+        ? (mistakes.isLoading ? 'লোড হচ্ছে…' : 'কোনো ভুল নেই')
+        : '${bn(mistakes.items.length)}${mistakes.hasMore ? '+' : ''}টি বাকি';
 
     return Scaffold(
-      appBar: AppBar(title: Text('Profile')),
-      body: SingleChildScrollView(
-        child: ResponsiveWrapper(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            child: Column(
-              children: [
-                _ProfileCard(statsAsync: statsAsync, currentUser: currentUser),
-                const SizedBox(height: 16),
-                _PerformanceCard(
-                  statsAsync: statsAsync,
-                  examResultsAsync: examResultsAsync,
+      backgroundColor: AppColors.canvas,
+      body: Column(
+        children: [
+          DecoratedBox(
+            decoration: const BoxDecoration(
+              color: AppColors.paper,
+              border: Border(bottom: BorderSide(color: AppColors.line)),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Container(
+                height: 60,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'প্রোফাইল',
+                  style: dsText(19, weight: FontWeight.w700),
                 ),
-                const SizedBox(height: 16),
-                _AccountCard(ref: ref),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ProfileCard extends StatelessWidget {
-  final AsyncValue<UserModel?> statsAsync;
-  final UserModel? currentUser;
-
-  const _ProfileCard({required this.statsAsync, required this.currentUser});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const CircleAvatar(radius: 40, child: Icon(Icons.person, size: 40)),
-            const SizedBox(height: 16),
-            statsAsync.when(
-              data: (user) {
-                if (user != null) {
-                  return Column(
-                    children: [
-                      Text(
-                        user.name.isNotEmpty ? user.name : ' ',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                      if (user.email.isNotEmpty)
-                        Text(
-                          user.email,
-                          style: const TextStyle(color: Colors.grey),
-                          textAlign: TextAlign.center,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      if (user.phone.isNotEmpty)
-                        Text(
-                          user.phone,
-                          style: const TextStyle(color: Colors.grey),
-                          textAlign: TextAlign.center,
-                        ),
-                    ],
-                  );
-                }
-                return Text(
-                  currentUser?.name ?? 'User Name',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                );
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(userExamResultsProvider);
+                ref.invalidate(streakProvider);
+                ref.invalidate(subjectPerformanceByDaysProvider(30));
+                await ref.read(mistakesProvider(null).notifier).refresh();
               },
-              loading: () => Text(
-                currentUser?.name ?? ' ',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-              error: (_, _) => Text(
-                currentUser?.name ?? ' ',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: 150,
-              child: OutlinedButton.icon(
-                onPressed: () => context.push('/profile/edit'),
-                icon: const Icon(Icons.edit, size: 18),
-                label: const Text('Edit Profile'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PerformanceCard extends StatelessWidget {
-  final AsyncValue<UserModel?> statsAsync;
-  final AsyncValue<List<ExamResultModel>> examResultsAsync;
-
-  const _PerformanceCard({
-    required this.statsAsync,
-    required this.examResultsAsync,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: statsAsync.when(
-          data: (stats) {
-            if (stats == null) {
-              return const SizedBox(
-                width: double.infinity,
-                height: 200,
-                child: Center(
-                  child: Text('No stats available yet. Take an exam!'),
-                ),
-              );
-            }
-            return Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _statItem(
-                        'Total Exams',
-                        stats.totalExamsAttended.toString(),
-                      ),
+              child: DsPage(
+                children: [
+                  DsCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
                     ),
-                    Expanded(
-                      child: _statItem(
-                        'Highest',
-                        stats.highestScore.toStringAsFixed(1),
-                      ),
-                    ),
-                    Expanded(
-                      child: _statItem(
-                        'Average',
-                        stats.averageScore.toStringAsFixed(1),
-                      ),
-                    ),
-                  ],
-                ),
-                const Divider(height: 40),
-                const Row(
-                  children: [
-                    Icon(
-                      Icons.trending_up,
-                      size: 20,
-                      color: AppTheme.primaryColor,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Performance Trajectory',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Your latest exam scores over time',
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
-                ),
-                const SizedBox(height: 24),
-                _buildChart(),
-              ],
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, s) => Text('Error loading stats: $e'),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChart() {
-    return examResultsAsync.when(
-      data: (results) {
-        if (results.isEmpty) {
-          return const SizedBox(
-            height: 220,
-            child: Center(
-              child: Text(
-                'Complete an exam to see your trajectory',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-          );
-        }
-
-        final spots = results.asMap().entries.map((e) {
-          return FlSpot(e.key.toDouble(), e.value.percentage);
-        }).toList();
-
-        return SizedBox(
-          height: 220,
-          child: LineChart(
-            LineChartData(
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: 20,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: Colors.grey.withValues(alpha: 0.12),
-                  strokeWidth: 1,
-                ),
-              ),
-              titlesData: FlTitlesData(
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 32,
-                    interval: 1,
-                    getTitlesWidget: (value, meta) {
-                      if (value.toInt() >= results.length) {
-                        return const SizedBox.shrink();
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          '${value.toInt() + 1}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              alignment: Alignment.center,
+                              decoration: const BoxDecoration(
+                                color: AppColors.brand,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                name.characters.first,
+                                style: dsText(
+                                  22,
+                                  weight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    name,
+                                    style: dsText(18, weight: FontWeight.w700),
+                                  ),
+                                  if (contact.isNotEmpty)
+                                    Text(
+                                      contact,
+                                      style: dsText(12, color: AppColors.muted),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            DsSmallButton(
+                              label: 'এডিট',
+                              onPressed: () => context.push('/profile/edit'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        DsCard(
+                          color: AppColors.brandSoft,
+                          borderWidth: 0,
+                          radius: 12,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          onTap: () => _pickGoal(context, ref, goalId),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'আমার লক্ষ্য',
+                                      style: dsText(
+                                        12,
+                                        color: AppColors.brandInk2,
+                                      ),
+                                    ),
+                                    Text(
+                                      goalLabel,
+                                      style: dsText(
+                                        15,
+                                        weight: FontWeight.w600,
+                                        color: AppColors.brandStrong,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                'বদলাও',
+                                style: dsText(
+                                  13,
+                                  weight: FontWeight.w600,
+                                  color: AppColors.brandStrong,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 36,
-                    interval: 20,
-                    getTitlesWidget: (value, meta) {
-                      return Text(
-                        '${value.toInt()}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey,
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            _stat(
+                              bn(user?.totalExamsAttended ?? results.length),
+                              'পরীক্ষা',
+                            ),
+                            _stat(
+                              avg == null ? '—' : '${bn(avg.round())}%',
+                              'গড়',
+                            ),
+                            _stat(
+                              best == null ? '—' : '${bn(best.round())}%',
+                              'সেরা',
+                            ),
+                            _stat('${bn(streak?.current ?? 0)} দিন', 'streak'),
+                          ],
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              minY: 0,
-              maxY: 100,
-              lineTouchData: LineTouchData(
-                enabled: true,
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipItems: (touchedSpots) {
-                    return touchedSpots.map((spot) {
-                      return LineTooltipItem(
-                        '${spot.y.toStringAsFixed(0)}%',
-                        const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      );
-                    }).toList();
-                  },
-                ),
-              ),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: spots,
-                  isCurved: true,
-                  color: AppTheme.primaryColor,
-                  barWidth: 3,
-                  isStrokeCapRound: true,
-                  dotData: FlDotData(
-                    show: true,
-                    getDotPainter: (spot, percent, barData, index) {
-                      return FlDotCirclePainter(
-                        radius: 5,
-                        color: AppTheme.primaryColor,
-                        strokeWidth: 2,
-                        strokeColor: Colors.white,
-                      );
-                    },
-                  ),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppTheme.primaryColor.withValues(alpha: 0.25),
-                        AppTheme.primaryColor.withValues(alpha: 0.0),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-      loading: () => const SizedBox(
-        height: 220,
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, s) =>
-          SizedBox(height: 220, child: Center(child: Text('Error: $e'))),
-    );
-  }
-
-  Widget _statItem(String label, String value) {
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        Text(
-          value,
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Colors.grey, fontSize: 12),
-        ),
-      ],
-    );
-  }
-}
-
-class _AccountCard extends StatelessWidget {
-  final WidgetRef ref;
-
-  const _AccountCard({required this.ref});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  await ref.read(authControllerProvider.notifier).signOut();
-                  appRouter.go('/login');
-                },
-                icon: const Icon(Icons.logout),
-                label: const Text('Sign Out'),
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                  DsCard(
+                    onTap: () => context.push('/progress'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'শেষ ${bn(last10.isEmpty ? 10 : last10.length)} পরীক্ষার ফল',
+                                style: dsText(15, weight: FontWeight.w600),
+                              ),
+                            ),
+                            Text(
+                              'সব দেখো',
+                              style: dsText(
+                                13,
+                                weight: FontWeight.w600,
+                                color: AppColors.brand,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        AccuracyChart(values: last10, height: 96),
+                      ],
+                    ),
+                  ),
+                  if (weakest.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(top: 2),
+                      child: SectionLabel(
+                        'সবচেয়ে দুর্বল বিষয়',
+                        trailing: 'গত ৩০ দিন',
+                      ),
+                    ),
+                    DsListCard(
+                      radius: 16,
+                      children: [for (final s in weakest) _WeakRow(subject: s)],
+                    ),
+                  ],
+                  DsGrid(
+                    children: [
+                      InfoTile(
+                        title: 'আমার অগ্রগতি',
+                        minHeight: 72,
+                        subtitle: subjects.isEmpty
+                            ? 'বিষয়ভিত্তিক হিসাব'
+                            : '${bn(subjects.length)} বিষয়ের হিসাব',
+                        onTap: () => context.push('/progress'),
+                      ),
+                      InfoTile(
+                        title: 'সব ভুল',
+                        minHeight: 72,
+                        subtitle: mistakesText,
+                        subtitleColor: mistakes.items.isEmpty
+                            ? null
+                            : AppColors.danger,
+                        onTap: () => context.push('/practice/mistakes'),
+                      ),
+                      InfoTile(
+                        title: 'সংরক্ষিত',
+                        minHeight: 72,
+                        subtitle: 'শীঘ্রই আসছে',
+                        onTap: () => showComingSoon(context, 'সংরক্ষিত প্রশ্ন'),
+                      ),
+                      InfoTile(
+                        title: 'শুনে পড়ো',
+                        minHeight: 72,
+                        subtitle: 'প্রশ্ন-উত্তর শোনো',
+                        onTap: () => context.push('/listen'),
+                      ),
+                    ],
+                  ),
+                  DsListCard(
+                    radius: 16,
+                    children: [
+                      _setting(
+                        'নোটিফিকেশন ও রিমাইন্ডার',
+                        onTap: () async {
+                          final service = ref.read(
+                            routineNotificationServiceProvider,
+                          );
+                          final granted = await service.requestPermission();
+                          if (granted) await service.scheduleRoutineReminders();
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                granted
+                                    ? 'রুটিনের রিমাইন্ডার চালু আছে'
+                                    : 'ফোনের সেটিংস থেকে নোটিফিকেশন চালু করো',
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      _setting(
+                        'ডার্ক মোড',
+                        trailing: 'শীঘ্রই',
+                        onTap: () => showComingSoon(context, 'ডার্ক মোড'),
+                      ),
+                      _setting(
+                        'লেখার আকার',
+                        trailing: 'মাঝারি',
+                        onTap: () =>
+                            showComingSoon(context, 'লেখার আকার বদলানো'),
+                      ),
+                      _setting(
+                        'সাহায্য ও মতামত',
+                        onTap: () => showComingSoon(context, 'সাহায্য ও মতামত'),
+                      ),
+                      InkWell(
+                        onTap: () async {
+                          await ref
+                              .read(authControllerProvider.notifier)
+                              .signOut();
+                          appRouter.go('/login');
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 13,
+                          ),
+                          child: Text(
+                            'লগ আউট',
+                            style: dsText(
+                              15,
+                              weight: FontWeight.w600,
+                              color: AppColors.danger,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stat(String value, String label) => Expanded(
+    child: Column(
+      children: [
+        Text(value, style: dsText(18, weight: FontWeight.w700)),
+        Text(label, style: dsText(11, color: AppColors.muted)),
+      ],
+    ),
+  );
+
+  Widget _setting(String title, {String? trailing, VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        child: Row(
+          children: [
+            Expanded(child: Text(title, style: dsText(15))),
+            if (trailing != null)
+              Text(trailing, style: dsText(13, color: AppColors.muted))
+            else
+              const Icon(
+                LucideIcons.chevronRight,
+                size: 16,
+                color: Color(0xFF8A919C),
+              ),
           ],
         ),
       ),
     );
+  }
+}
+
+class _WeakRow extends StatelessWidget {
+  final SubjectPerformance subject;
+
+  const _WeakRow({required this.subject});
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (subject.accuracy * 100).round();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${subject.name} · ${bn(pct)}%',
+                  style: dsText(14, weight: FontWeight.w600),
+                ),
+                const SizedBox(height: 5),
+                DsBar(
+                  value: subject.accuracy,
+                  height: 5,
+                  track: AppColors.lineSoft,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          DsSmallButton(
+            label: 'অনুশীলন',
+            onPressed: () => context.push(practicePath(subject)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String practicePath(SubjectPerformance s) =>
+    '/taxonomy-questions/${s.syllabusId}/${s.nodeId}'
+    '?title=${Uri.encodeComponent(s.name)}';
+
+/// "বদলাও" on the goal card. The choice is stored on this device until the
+/// API has a target-exam field.
+Future<void> _pickGoal(
+  BuildContext context,
+  WidgetRef ref,
+  String? current,
+) async {
+  final picked = await showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    backgroundColor: AppColors.paper,
+    builder: (context) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('আমার লক্ষ্য', style: dsText(18, weight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text(
+              'হোমের "আজ" card এটা দেখেই সাজানো হয়',
+              style: dsText(13, color: AppColors.muted),
+            ),
+            const SizedBox(height: 12),
+            for (final o in targetExamOptions)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: DsCard(
+                  color: o.id == (current ?? 'bcs')
+                      ? AppColors.brandSoft
+                      : AppColors.paper,
+                  borderColor: o.id == (current ?? 'bcs')
+                      ? AppColors.brand
+                      : AppColors.lineStrong,
+                  radius: 12,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  onTap: () => Navigator.of(context).pop(o.id),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          o.label,
+                          style: dsText(15, weight: FontWeight.w600),
+                        ),
+                      ),
+                      if (o.id == (current ?? 'bcs'))
+                        const Icon(
+                          LucideIcons.check,
+                          size: 18,
+                          color: AppColors.brand,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+  if (picked != null) {
+    await ref.read(targetExamProvider.notifier).set(picked);
   }
 }

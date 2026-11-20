@@ -1,16 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/config/api_config.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/brand_mark.dart';
+import '../../../core/widgets/ds.dart';
 import '../controllers/auth_controller.dart';
+import '../widgets/auth_ui.dart';
 
 final apiConnectionProvider = FutureProvider.autoDispose<bool>((ref) async {
   final client = http.Client();
@@ -29,9 +32,40 @@ final apiConnectionProvider = FutureProvider.autoDispose<bool>((ref) async {
   }
 });
 
-/// Sign in / create account. Fields, copy, and validation mirror the
-/// website's UserSignInScreen (exam_assistant_admin/src/components/
-/// user-sign-in-screen.tsx), which is the source of truth.
+/// Sends a signed-in user on to `/`, where [AuthGate] picks home or setup.
+/// Shared by the login and sign-up pages.
+mixin AuthRedirect<T extends ConsumerStatefulWidget> on ConsumerState<T> {
+  bool redirecting = false;
+
+  void goHome() {
+    if (redirecting || !mounted) return;
+    redirecting = true;
+    context.go('/');
+  }
+
+  void listenForSignIn() {
+    ref.listenManual(authStateChangesProvider, (_, next) {
+      if (next.value != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => goHome());
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.read(authServiceProvider).currentUser != null) goHome();
+    });
+  }
+
+  /// While the stored session is being restored, show a spinner instead of
+  /// flashing the form.
+  bool get restoringSession => ref
+      .watch(authStateChangesProvider)
+      .when(
+        data: (u) => u != null,
+        loading: () => true,
+        error: (_, _) => false,
+      );
+}
+
+/// লগ ইন: email + password. New users go to [SignupScreen] via the footer.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -39,633 +73,223 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen>
+    with AuthRedirect<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
-  final _emailFocus = FocusNode();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
   final _passwordFocus = FocusNode();
-  final _confirmFocus = FocusNode();
-
-  bool _isRegistering = false;
-  bool _obscurePassword = true;
-  bool _obscureConfirm = true;
-  bool _redirecting = false;
-  bool _isTestingApi = false;
-  bool _apiTestSucceeded = false;
+  bool _obscure = true;
   String? _error;
-  Timer? _apiHealthTimer;
 
   @override
   void initState() {
     super.initState();
-    _apiHealthTimer = Timer.periodic(const Duration(seconds: 20), (_) {
-      if (mounted) ref.invalidate(apiConnectionProvider);
-    });
-    ref.listenManual(authStateChangesProvider, (_, next) {
-      next.whenOrNull(
-        data: (user) {
-          if (user != null && !_redirecting) {
-            _redirecting = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) context.go('/');
-            });
-          }
-        },
-      );
-    });
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _checkAlreadySignedIn(),
-    );
-  }
-
-  void _checkAlreadySignedIn() {
-    if (_redirecting || _isTestingApi) return;
-    final user = ref.read(authServiceProvider).currentUser;
-    if (user != null && mounted) {
-      _redirecting = true;
-      context.go('/');
-    }
+    listenForSignIn();
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmController.dispose();
-    _emailFocus.dispose();
+    _email.dispose();
+    _password.dispose();
     _passwordFocus.dispose();
-    _confirmFocus.dispose();
-    _apiHealthTimer?.cancel();
     super.dispose();
-  }
-
-  void _switchMode() {
-    setState(() {
-      _isRegistering = !_isRegistering;
-      _error = null;
-      _passwordController.clear();
-      _confirmController.clear();
-    });
-    _formKey.currentState?.reset();
   }
 
   Future<void> _submit() async {
     setState(() => _error = null);
     if (!_formKey.currentState!.validate()) return;
-
-    final controller = ref.read(authControllerProvider.notifier);
+    TextInput.finishAutofillContext();
     try {
-      if (_isRegistering) {
-        await controller.createUserWithEmailAndPassword(
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
-      } else {
-        await controller.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
-      }
-      if (mounted && !_redirecting) {
-        _redirecting = true;
-        context.go('/');
-      }
+      await ref
+          .read(authControllerProvider.notifier)
+          .signInWithEmailAndPassword(
+            email: _email.text.trim(),
+            password: _password.text,
+          );
+      goHome();
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted) setState(() => _error = authErrorText(error));
     }
   }
 
-  Future<void> _runApiAccountTest() async {
-    if (_isTestingApi || _apiTestSucceeded) return;
-    if (ref.read(apiConnectionProvider).asData?.value != true) return;
+  @override
+  Widget build(BuildContext context) {
+    if (restoringSession) {
+      return const Scaffold(
+        backgroundColor: AppColors.canvas,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    final busy = ref.watch(authControllerProvider).isLoading;
 
-    setState(() => _isTestingApi = true);
-    String resultMessage;
+    return AuthScaffold(
+      footer: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AuthFooter(
+            prompt: 'অ্যাকাউন্ট নেই?',
+            action: 'নতুন অ্যাকাউন্ট খোলো',
+            onTap: busy ? null : () => context.push('/signup'),
+          ),
+          if (kDebugMode) const _ApiConnectionBadge(),
+        ],
+      ),
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppColors.brand,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              LucideIcons.bookOpen,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          'আবার স্বাগতম',
+          style: dsText(26, weight: FontWeight.w700, height: 1.3),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'লগ ইন করে প্রস্তুতি চালিয়ে যাও',
+          style: dsText(15, color: AppColors.ink2),
+        ),
+        const SizedBox(height: 28),
+        Form(
+          key: _formKey,
+          child: AutofillGroup(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (_error != null) ...[
+                  AuthErrorBox(_error!),
+                  const SizedBox(height: 16),
+                ],
+                AuthField(
+                  label: 'ইমেইল',
+                  controller: _email,
+                  hint: 'tomar@email.com',
+                  keyboardType: TextInputType.emailAddress,
+                  action: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
+                  validator: validateEmail,
+                  onSubmitted: (_) => _passwordFocus.requestFocus(),
+                ),
+                const SizedBox(height: 16),
+                AuthField(
+                  label: 'পাসওয়ার্ড',
+                  controller: _password,
+                  focusNode: _passwordFocus,
+                  hint: 'পাসওয়ার্ড লেখো',
+                  obscure: _obscure,
+                  action: TextInputAction.done,
+                  autofillHints: const [AutofillHints.password],
+                  validator: validatePassword,
+                  onSubmitted: (_) => _submit(),
+                  suffix: PasswordToggle(
+                    obscured: _obscure,
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: AuthLink(
+                    label: 'পাসওয়ার্ড ভুলে গেছো?',
+                    // The API has no reset endpoint yet.
+                    onTap: () => showComingSoon(context, 'পাসওয়ার্ড রিসেট'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                AuthSubmitButton(
+                  label: 'লগ ইন',
+                  busy: busy,
+                  onPressed: _submit,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Debug builds only: V1 when `/health` answers, tap to create a Neon test
+/// user. Not part of the design.
+class _ApiConnectionBadge extends ConsumerStatefulWidget {
+  const _ApiConnectionBadge();
+
+  @override
+  ConsumerState<_ApiConnectionBadge> createState() =>
+      _ApiConnectionBadgeState();
+}
+
+class _ApiConnectionBadgeState extends ConsumerState<_ApiConnectionBadge> {
+  Timer? _timer;
+  bool _testing = false;
+  bool _passed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted) ref.invalidate(apiConnectionProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _runTest() async {
+    setState(() => _testing = true);
+    String message;
     try {
       final profile = await ref
           .read(accountApiServiceProvider)
           .createTestUser();
-      _apiTestSucceeded = true;
-      resultMessage = 'Neon test passed. Test user: ${profile.email}';
+      _passed = true;
+      message = 'Neon test passed. Test user: ${profile.email}';
     } catch (error) {
-      resultMessage = 'Neon test failed: $error';
+      message = 'Neon test failed: $error';
     }
     if (!mounted) return;
-    setState(() => _isTestingApi = false);
+    setState(() => _testing = false);
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(resultMessage)));
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Please enter your password';
-    final bytes = utf8.encode(value).length;
-    if (_isRegistering && bytes < 8) return 'At least 8 characters';
-    if (bytes > 72) return 'Password must be no more than 72 bytes';
-    return null;
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authStateChangesProvider);
-    final showForm = authState.when(
-      data: (user) => user == null,
-      loading: () => false,
-      error: (_, _) => true,
-    );
-
-    if (!showForm && !_redirecting) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final user = ref.read(authServiceProvider).currentUser;
-        if (user != null && mounted && !_redirecting) {
-          _redirecting = true;
-          context.go('/');
-        }
-      });
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    final busy = ref.watch(authControllerProvider).isLoading;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Scaffold(
-      body: SingleChildScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        child: Column(
-          children: [
-            const _AuthHero(),
-            Transform.translate(
-              offset: const Offset(0, -64),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 440),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-                      decoration: BoxDecoration(
-                        color: AppColors.paper,
-                        borderRadius: BorderRadius.circular(AppRadii.xl),
-                        border: Border.all(color: AppColors.line),
-                        boxShadow: AppShadows.card,
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        child: AutofillGroup(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                _isRegistering ? 'GET STARTED' : 'WELCOME BACK',
-                                style: textTheme.labelSmall?.copyWith(
-                                  color: AppColors.brand,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.4,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _isRegistering
-                                    ? 'Create your account'
-                                    : 'Sign in to your account',
-                                style: textTheme.headlineMedium,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _isRegistering
-                                    ? 'Join Exam Assistant to start preparing for your exams.'
-                                    : 'Continue to your exams and learning progress.',
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.muted,
-                                ),
-                              ),
-                              const SizedBox(height: 22),
-                              if (_error != null) _ErrorAlert(message: _error!),
-                              if (_isRegistering) ...[
-                                const _FieldLabel('Your name'),
-                                TextFormField(
-                                  controller: _nameController,
-                                  autofillHints: const [AutofillHints.name],
-                                  textCapitalization: TextCapitalization.words,
-                                  textInputAction: TextInputAction.next,
-                                  maxLength: 200,
-                                  buildCounter: _noCounter,
-                                  decoration: const InputDecoration(
-                                    hintText: 'Your name',
-                                  ),
-                                  onFieldSubmitted: (_) =>
-                                      _emailFocus.requestFocus(),
-                                  validator: (v) =>
-                                      (v == null || v.trim().isEmpty)
-                                      ? 'Please enter your name'
-                                      : null,
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-                              const _FieldLabel('Email address'),
-                              TextFormField(
-                                controller: _emailController,
-                                focusNode: _emailFocus,
-                                autofillHints: const [AutofillHints.email],
-                                keyboardType: TextInputType.emailAddress,
-                                textInputAction: TextInputAction.next,
-                                decoration: const InputDecoration(
-                                  hintText: 'name@example.com',
-                                ),
-                                onFieldSubmitted: (_) =>
-                                    _passwordFocus.requestFocus(),
-                                validator: (v) {
-                                  final value = v?.trim() ?? '';
-                                  if (value.isEmpty) {
-                                    return 'Please enter your email';
-                                  }
-                                  if (!value.contains('@')) {
-                                    return 'Enter a valid email address';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              const _FieldLabel('Password'),
-                              TextFormField(
-                                controller: _passwordController,
-                                focusNode: _passwordFocus,
-                                obscureText: _obscurePassword,
-                                autofillHints: [
-                                  _isRegistering
-                                      ? AutofillHints.newPassword
-                                      : AutofillHints.password,
-                                ],
-                                textInputAction: _isRegistering
-                                    ? TextInputAction.next
-                                    : TextInputAction.done,
-                                decoration: InputDecoration(
-                                  hintText: _isRegistering
-                                      ? 'At least 8 characters'
-                                      : 'Enter your password',
-                                  suffixIcon: _VisibilityToggle(
-                                    obscured: _obscurePassword,
-                                    onPressed: () => setState(
-                                      () =>
-                                          _obscurePassword = !_obscurePassword,
-                                    ),
-                                  ),
-                                ),
-                                onFieldSubmitted: (_) => _isRegistering
-                                    ? _confirmFocus.requestFocus()
-                                    : _submit(),
-                                validator: _validatePassword,
-                              ),
-                              if (_isRegistering) ...[
-                                const SizedBox(height: 16),
-                                const _FieldLabel('Confirm password'),
-                                TextFormField(
-                                  controller: _confirmController,
-                                  focusNode: _confirmFocus,
-                                  obscureText: _obscureConfirm,
-                                  autofillHints: const [
-                                    AutofillHints.newPassword,
-                                  ],
-                                  textInputAction: TextInputAction.done,
-                                  decoration: InputDecoration(
-                                    hintText: 'Enter your password again',
-                                    suffixIcon: _VisibilityToggle(
-                                      obscured: _obscureConfirm,
-                                      onPressed: () => setState(
-                                        () =>
-                                            _obscureConfirm = !_obscureConfirm,
-                                      ),
-                                    ),
-                                  ),
-                                  onFieldSubmitted: (_) => _submit(),
-                                  validator: (v) {
-                                    if (v == null || v.isEmpty) {
-                                      return 'Please confirm your password';
-                                    }
-                                    if (v != _passwordController.text) {
-                                      return 'Passwords do not match.';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ],
-                              const SizedBox(height: 24),
-                              FilledButton(
-                                onPressed: busy ? null : _submit,
-                                child: busy
-                                    ? Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Text(
-                                            _isRegistering
-                                                ? 'Creating account...'
-                                                : 'Signing in...',
-                                          ),
-                                        ],
-                                      )
-                                    : Text(
-                                        _isRegistering
-                                            ? 'Create account'
-                                            : 'Sign in',
-                                      ),
-                              ),
-                              const SizedBox(height: 14),
-                              Wrap(
-                                alignment: WrapAlignment.center,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Text(
-                                    _isRegistering
-                                        ? 'Already have an account?'
-                                        : 'New to Exam Assistant?',
-                                    style: textTheme.bodyMedium?.copyWith(
-                                      color: AppColors.muted,
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: busy ? null : _switchMode,
-                                    child: Text(
-                                      _isRegistering
-                                          ? 'Sign in'
-                                          : 'Create an account',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Transform.translate(
-              offset: const Offset(0, -48),
-              child: _ApiConnectionIndicator(
-                onTap: _runApiAccountTest,
-                isTesting: _isTestingApi,
-                testSucceeded: _apiTestSucceeded,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static Widget? _noCounter(
-    BuildContext context, {
-    required int currentLength,
-    required bool isFocused,
-    required int? maxLength,
-  }) => null;
-}
-
-/// Emerald header with progress-ring decoration — the mobile layout of the
-/// website's `.signin-brand-panel`.
-class _AuthHero extends StatelessWidget {
-  const _AuthHero();
-
-  @override
-  Widget build(BuildContext context) {
-    final topInset = MediaQuery.paddingOf(context).top;
-    return Container(
-      width: double.infinity,
-      clipBehavior: Clip.hardEdge,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.heroSoft, AppColors.hero],
-          stops: [0, 0.6],
-        ),
-      ),
-      child: Stack(
-        children: [
-          const Positioned.fill(child: CustomPaint(painter: _RingsPainter())),
-          Padding(
-            padding: EdgeInsets.fromLTRB(24, topInset + 24, 24, 96),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const BrandLockup(light: true),
-                    const SizedBox(height: 32),
-                    Text(
-                      'YOUR PREPARATION SPACE',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.62),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text.rich(
-                      const TextSpan(
-                        text: 'Make every ',
-                        children: [
-                          TextSpan(
-                            text: 'day',
-                            style: TextStyle(color: AppColors.accent),
-                          ),
-                          TextSpan(text: ' count.'),
-                        ],
-                      ),
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
-                            color: Colors.white,
-                            fontSize: 34,
-                            height: 1.05,
-                          ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Exams, practice, and your daily routine in one calm place. '
-                      'প্রতিদিন একটু একটু করে এগিয়ে যাও।',
-                      style: TextStyle(
-                        color: const Color(0xFFECF4F1).withValues(alpha: 0.75),
-                        fontSize: 15,
-                        height: 1.55,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RingsPainter extends CustomPainter {
-  const _RingsPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final glow = Paint()
-      ..shader =
-          RadialGradient(
-            colors: [
-              AppColors.accent.withValues(alpha: 0.26),
-              Colors.transparent,
-            ],
-          ).createShader(
-            Rect.fromCircle(
-              center: Offset(size.width * 0.9, size.height * 0.85),
-              radius: size.width * 0.55,
-            ),
-          );
-    canvas.drawRect(Offset.zero & size, glow);
-
-    final center = Offset(size.width + 40, size.height * 0.42);
-    canvas.drawCircle(
-      center,
-      170,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..color = Colors.white.withValues(alpha: 0.10),
-    );
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: 122),
-      math.pi * 0.75,
-      math.pi * 0.62,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..strokeCap = StrokeCap.round
-        ..color = AppColors.accent.withValues(alpha: 0.6),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
+    final up = ref.watch(apiConnectionProvider).value ?? false;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: AppColors.ink2,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _VisibilityToggle extends StatelessWidget {
-  final bool obscured;
-  final VoidCallback onPressed;
-
-  const _VisibilityToggle({required this.obscured, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      tooltip: obscured ? 'Show password' : 'Hide password',
-      icon: Icon(
-        obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-        size: 20,
-      ),
-      onPressed: onPressed,
-    );
-  }
-}
-
-class _ErrorAlert extends StatelessWidget {
-  final String message;
-
-  const _ErrorAlert({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-      decoration: BoxDecoration(
-        color: AppColors.dangerSoft,
-        borderRadius: BorderRadius.circular(AppRadii.sm),
-        border: Border.all(color: const Color(0xFFF3D3D0)),
-      ),
-      child: Text(
-        message,
-        style: const TextStyle(color: AppColors.danger, fontSize: 13),
-      ),
-    );
-  }
-}
-
-class _ApiConnectionIndicator extends ConsumerWidget {
-  const _ApiConnectionIndicator({
-    required this.onTap,
-    required this.isTesting,
-    required this.testSucceeded,
-  });
-
-  final VoidCallback onTap;
-  final bool isTesting;
-  final bool testSucceeded;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isConnected = ref.watch(apiConnectionProvider).asData?.value ?? false;
-    final color = isConnected ? AppColors.brandStrong : AppColors.danger;
-    final background = isConnected ? AppColors.brandSoft : AppColors.dangerSoft;
-
-    return Semantics(
-      button: isConnected,
-      label: isConnected
-          ? 'V1: Tap to test Neon user creation'
-          : 'V0: API unavailable',
+      padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
-        onTap: isConnected && !isTesting && !testSucceeded ? onTap : null,
+        onTap: up && !_testing && !_passed ? _runTest : null,
         borderRadius: BorderRadius.circular(24),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: background,
+            color: up ? AppColors.brandSoft : AppColors.dangerSoft,
             borderRadius: BorderRadius.circular(24),
           ),
           child: Text(
-            isConnected ? 'V1' : 'V0',
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
+            up ? 'V1' : 'V0',
+            style: dsText(
+              11,
+              weight: FontWeight.w700,
+              color: up ? AppColors.brandStrong : AppColors.danger,
             ),
           ),
         ),

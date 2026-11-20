@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/bangla_digits.dart';
+import '../../../core/widgets/ds.dart';
 import '../controllers/routine_controller.dart';
 import '../data/models/routine_block_model.dart';
+import '../widgets/routine_ui.dart';
 import '../widgets/subject_picker_dialog.dart';
+import 'routine_setup_screen.dart';
 
 /// Router entry point for editing the user's existing routine — loads the
 /// current routine first, then hands it to [RoutineBuilderScreen].
@@ -29,9 +34,8 @@ class RoutineBuilderRoute extends ConsumerWidget {
   }
 }
 
-/// Lets the user add, edit, reorder (by sort), and save their own routine
-/// blocks. Opened either blank (custom routine) or pre-filled from a
-/// template the user picked.
+/// রুটিন এডিট: pick a day, see and edit that day's blocks, add new ones in
+/// a sheet. Opened blank, from a template, or with the current routine.
 class RoutineBuilderScreen extends ConsumerStatefulWidget {
   final String title;
   final List<RoutineBlockModel> initialBlocks;
@@ -50,43 +54,22 @@ class RoutineBuilderScreen extends ConsumerStatefulWidget {
 }
 
 class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
-  late final TextEditingController _titleController;
-  late List<RoutineBlockModel> _blocks;
+  late List<RoutineBlockModel> _blocks = [...widget.initialBlocks];
+  int _day = DateTime.now().weekday;
 
-  @override
-  void initState() {
-    super.initState();
-    _titleController = TextEditingController(text: widget.title);
-    _blocks = [...widget.initialBlocks];
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _addOrEditBlock({
-    RoutineBlockModel? existing,
-    int? index,
-  }) async {
-    final result = await showModalBottomSheet<RoutineBlockModel>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => _BlockEditorSheet(initial: existing),
-    );
+  Future<void> _edit({RoutineBlockModel? existing}) async {
+    final result = await showBlockSheet(context, initial: existing);
     if (result == null) return;
     setState(() {
-      if (index != null) {
-        _blocks[index] = result;
+      final index = existing == null ? -1 : _blocks.indexOf(existing);
+      if (result.delete) {
+        if (index >= 0) _blocks.removeAt(index);
+      } else if (index >= 0) {
+        _blocks[index] = result.block!;
       } else {
-        _blocks.add(result);
+        _blocks = [..._blocks, result.block!];
       }
     });
-  }
-
-  void _removeBlock(int index) {
-    setState(() => _blocks.removeAt(index));
   }
 
   Future<void> _save() async {
@@ -98,18 +81,16 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
     }
     final sorted = [..._blocks]
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
-    final ordered = [
-      for (var i = 0; i < sorted.length; i++) sorted[i].copyWith(sortOrder: i),
-    ];
     try {
       await ref
           .read(routineControllerProvider.notifier)
           .saveRoutine(
-            title: _titleController.text.trim().isEmpty
-                ? 'My Routine'
-                : _titleController.text.trim(),
+            title: widget.title,
             sourceTemplateId: widget.sourceTemplateId,
-            blocks: ordered,
+            blocks: [
+              for (var i = 0; i < sorted.length; i++)
+                sorted[i].copyWith(sortOrder: i),
+            ],
           );
       if (!mounted) return;
       context.go('/routine');
@@ -124,134 +105,336 @@ class _RoutineBuilderScreenState extends ConsumerState<RoutineBuilderScreen> {
   @override
   Widget build(BuildContext context) {
     final saving = ref.watch(routineControllerProvider).isLoading;
-    final sorted = [..._blocks]
+    final templates = ref.watch(routineTemplatesProvider).value ?? const [];
+    final template = templates
+        .where((t) => t.templateId == widget.sourceTemplateId)
+        .firstOrNull;
+    final dayBlocks = _blocks.where((b) => b.daysOfWeek.contains(_day)).toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    final studyMinutes = dayBlocks
+        .where((b) => b.category == RoutineBlockCategory.study)
+        .fold<int>(0, (sum, b) => sum + blockMinutes(b));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('রুটিন তৈরি করো'),
-        actions: [
-          IconButton(
-            icon: saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check),
-            onPressed: saving ? null : _save,
-            tooltip: 'সেভ করো',
-          ),
-        ],
+      backgroundColor: AppColors.canvas,
+      appBar: DsHeader(
+        title: 'রুটিন এডিট',
+        bordered: false,
+        trailing: DsButton(
+          label: saving ? 'সেভ হচ্ছে…' : 'সেভ',
+          height: 36,
+          fontSize: 14,
+          onPressed: saving ? null : _save,
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
-          TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(
-              labelText: 'রুটিনের নাম',
-              border: OutlineInputBorder(),
+          Container(
+            decoration: const BoxDecoration(
+              color: AppColors.paper,
+              border: Border(bottom: BorderSide(color: AppColors.line)),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Row(
+              children: [
+                for (final (i, d) in routineWeekOrder.indexed) ...[
+                  if (i > 0) const SizedBox(width: 4),
+                  Expanded(child: _dayButton(d)),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          if (sorted.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: Center(child: Text('এখনও কোনো ব্লক যুক্ত করা হয়নি।')),
-            )
-          else
-            ...sorted.map((block) {
-              final index = _blocks.indexOf(block);
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: AppTheme.primaryColor.withValues(
-                      alpha: 0.1,
+          Expanded(
+            child: DsPage(
+              children: [
+                DsCard(
+                  color: AppColors.brandSoft,
+                  borderWidth: 0,
+                  radius: 14,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const RoutineSetupScreen(),
                     ),
-                    child: Text(
-                      block.startTime.split(':').first,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.primaryColor,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              template == null
+                                  ? 'নিজের বানানো রুটিন'
+                                  : 'টেমপ্লেট থেকে শুরু করা',
+                              style: dsText(12, color: AppColors.brandInk2),
+                            ),
+                            Text(
+                              template?.title ?? widget.title,
+                              style: dsText(
+                                14,
+                                weight: FontWeight.w600,
+                                color: AppColors.brandStrong,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                  title: Text(block.title),
-                  subtitle: Text(
-                    '${block.startTime} - ${block.endTime} · ${block.category.label}'
-                    '${block.subjectName == null ? '' : ' · ${block.subjectName}'}',
-                  ),
-                  onTap: () => _addOrEditBlock(existing: block, index: index),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => _removeBlock(index),
+                      Text(
+                        template == null ? 'টেমপ্লেট দেখো' : 'বদলাও',
+                        style: dsText(
+                          13,
+                          weight: FontWeight.w600,
+                          color: AppColors.brandStrong,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            }),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () => _addOrEditBlock(),
-            icon: const Icon(Icons.add),
-            label: const Text('নতুন ব্লক যুক্ত করো'),
+                SectionLabel(
+                  '${weekdayFull(_day)}-এর ব্লক',
+                  trailing: 'মোট পড়া ${bnMinutes(studyMinutes)}',
+                ),
+                if (dayBlocks.isEmpty)
+                  DsCard(
+                    child: Text(
+                      'এই দিনে কোনো ব্লক নেই।',
+                      style: dsText(14, color: AppColors.muted),
+                    ),
+                  )
+                else
+                  DsListCard(
+                    radius: 16,
+                    children: [for (final b in dayBlocks) _blockRow(b)],
+                  ),
+                Text(
+                  'যে ব্লক কয়েক দিনে আছে, সেটা এডিট করলে সব দিনেই বদলাবে',
+                  textAlign: TextAlign.center,
+                  style: dsText(12, color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: const BoxDecoration(
+              color: AppColors.paper,
+              border: Border(top: BorderSide(color: AppColors.line)),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+            child: SafeArea(
+              top: false,
+              child: Material(
+                color: AppColors.paper,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: AppColors.brand, width: 1.5),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => _edit(),
+                  child: SizedBox(
+                    height: 48,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          LucideIcons.plus,
+                          size: 18,
+                          color: AppColors.brand,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'নতুন ব্লক',
+                          style: dsText(
+                            15,
+                            weight: FontWeight.w600,
+                            color: AppColors.brand,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+
+  Widget _dayButton(int d) {
+    final on = d == _day;
+    final count = _blocks.where((b) => b.daysOfWeek.contains(d)).length;
+    return Material(
+      color: on ? AppColors.ink : AppColors.paper,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: on ? BorderSide.none : const BorderSide(color: Color(0xFFDADDE1)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => setState(() => _day = d),
+        child: SizedBox(
+          height: 48,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                weekdayShort(d),
+                style: dsText(
+                  12,
+                  weight: on ? FontWeight.w600 : FontWeight.w400,
+                  color: on ? Colors.white : AppColors.ink,
+                ),
+              ),
+              Text(
+                '${bn(count)}টি',
+                style: dsText(11, color: on ? Colors.white70 : AppColors.muted),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _blockRow(RoutineBlockModel b) {
+    final meta = [
+      b.category.label,
+      ?b.subjectName,
+      daysLabel(b.daysOfWeek),
+    ].join(' · ');
+    return InkWell(
+      onTap: () => _edit(existing: b),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: categoryTint(b.category),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 76,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    bnClock12(b.startTime),
+                    style: dsText(13, weight: FontWeight.w600),
+                  ),
+                  Text(
+                    bnClockParts(b.endTime).$1,
+                    style: dsText(12, color: AppColors.muted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    b.title,
+                    style: dsText(15, weight: FontWeight.w600, height: 1.3),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(meta, style: dsText(12, color: AppColors.muted)),
+                ],
+              ),
+            ),
+            const Icon(
+              LucideIcons.chevronRight,
+              size: 16,
+              color: Color(0xFF8A919C),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _BlockEditorSheet extends StatefulWidget {
+/// What the block sheet returns: a new/edited block, or a delete.
+class BlockSheetResult {
+  final RoutineBlockModel? block;
+  final bool delete;
+
+  const BlockSheetResult.save(RoutineBlockModel this.block) : delete = false;
+  const BlockSheetResult.delete() : block = null, delete = true;
+}
+
+Future<BlockSheetResult?> showBlockSheet(
+  BuildContext context, {
+  RoutineBlockModel? initial,
+}) {
+  return showModalBottomSheet<BlockSheetResult>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: false,
+    backgroundColor: AppColors.paper,
+    barrierColor: const Color(0x73101216),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+    ),
+    builder: (_) => _BlockSheet(initial: initial),
+  );
+}
+
+class _BlockSheet extends StatefulWidget {
   final RoutineBlockModel? initial;
 
-  const _BlockEditorSheet({this.initial});
+  const _BlockSheet({this.initial});
 
   @override
-  State<_BlockEditorSheet> createState() => _BlockEditorSheetState();
+  State<_BlockSheet> createState() => _BlockSheetState();
 }
 
-class _BlockEditorSheetState extends State<_BlockEditorSheet> {
-  late final TextEditingController _titleController;
-  late RoutineBlockCategory _category;
-  late TimeOfDay _start;
-  late TimeOfDay _end;
-  late Set<int> _days;
-  int? _subjectId;
-  String? _subjectName;
-
-  static const _dayLabels = [
-    'সোম',
-    'মঙ্গল',
-    'বুধ',
-    'বৃহ',
-    'শুক্র',
-    'শনি',
-    'রবি',
-  ];
+class _BlockSheetState extends State<_BlockSheet> {
+  late final _title = TextEditingController(text: widget.initial?.title ?? '');
+  late RoutineBlockCategory _cat =
+      widget.initial?.category ?? RoutineBlockCategory.study;
+  late String _start = widget.initial?.startTime ?? '16:00';
+  late String _end = widget.initial?.endTime ?? '18:00';
+  late Set<int> _days = (widget.initial?.daysOfWeek ?? routineWeekOrder)
+      .toSet();
+  late int? _subjectId = widget.initial?.syllabusNodeId;
+  late String? _subjectName = widget.initial?.subjectName;
 
   @override
-  void initState() {
-    super.initState();
-    final initial = widget.initial;
-    _titleController = TextEditingController(text: initial?.title ?? '');
-    _category = initial?.category ?? RoutineBlockCategory.study;
-    _start = initial != null
-        ? _parseTime(initial.startTime)
-        : const TimeOfDay(hour: 6, minute: 0);
-    _end = initial != null
-        ? _parseTime(initial.endTime)
-        : const TimeOfDay(hour: 7, minute: 0);
-    _days = (initial?.daysOfWeek ?? const [1, 2, 3, 4, 5, 6, 7]).toSet();
-    _subjectId = initial?.syllabusNodeId;
-    _subjectName = initial?.subjectName;
+  void dispose() {
+    _title.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickTime(bool start) async {
+    final current = start ? _start : _end;
+    final m = minutesOf(current);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: m ~/ 60, minute: m % 60),
+    );
+    if (picked == null) return;
+    final value =
+        '${picked.hour.toString().padLeft(2, '0')}:'
+        '${picked.minute.toString().padLeft(2, '0')}';
+    setState(() => start ? _start = value : _end = value);
   }
 
   Future<void> _pickSubject() async {
     final choice = await showDialog<SubjectChoice>(
       context: context,
-      builder: (context) => SubjectPickerDialog(selectedNodeId: _subjectId),
+      builder: (_) => SubjectPickerDialog(selectedNodeId: _subjectId),
     );
     if (choice == null) return;
     setState(() {
@@ -260,152 +443,283 @@ class _BlockEditorSheetState extends State<_BlockEditorSheet> {
     });
   }
 
-  TimeOfDay _parseTime(String value) {
-    final parts = value.split(':');
-    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-  }
-
-  String _formatTime(TimeOfDay time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
-
-  Future<void> _pickTime(bool isStart) async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: isStart ? _start : _end,
-    );
-    if (picked == null) return;
-    setState(() {
-      if (isStart) {
-        _start = picked;
-      } else {
-        _end = picked;
-      }
-    });
-  }
-
-  void _save() {
-    if (_titleController.text.trim().isEmpty || _days.isEmpty) return;
-    final isStudy = _category == RoutineBlockCategory.study;
+  void _submit() {
+    final title = _title.text.trim();
+    if (title.isEmpty || _days.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            title.isEmpty ? 'ব্লকের নাম দাও' : 'অন্তত একটা দিন বেছে নাও',
+          ),
+        ),
+      );
+      return;
+    }
+    final study = _cat == RoutineBlockCategory.study;
     Navigator.of(context).pop(
-      RoutineBlockModel(
-        id: widget.initial?.id,
-        title: _titleController.text.trim(),
-        category: _category,
-        startTime: _formatTime(_start),
-        endTime: _formatTime(_end),
-        daysOfWeek: _days.toList()..sort(),
-        syllabusNodeId: isStudy ? _subjectId : null,
-        subjectName: isStudy ? _subjectName : null,
+      BlockSheetResult.save(
+        RoutineBlockModel(
+          id: widget.initial?.id,
+          title: title,
+          category: _cat,
+          startTime: _start,
+          endTime: _end,
+          daysOfWeek: _days.toList()..sort(),
+          sortOrder: widget.initial?.sortOrder ?? 0,
+          syllabusNodeId: study ? _subjectId : null,
+          subjectName: study ? _subjectName : null,
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final label = dsText(13, weight: FontWeight.w600, color: AppColors.ink2);
+    final editing = widget.initial != null;
+    final field = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: AppColors.lineStrong, width: 1.5),
+    );
+
     return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              widget.initial == null ? 'নতুন ব্লক' : 'ব্লক এডিট করো',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'ব্লকের নাম',
-                hintText: 'যেমন: Math Practice',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<RoutineBlockCategory>(
-              initialValue: _category,
-              decoration: const InputDecoration(
-                labelText: 'ধরন',
-                border: OutlineInputBorder(),
-              ),
-              items: RoutineBlockCategory.values
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c.label)))
-                  .toList(),
-              onChanged: (value) => setState(() => _category = value!),
-            ),
-            if (_category == RoutineBlockCategory.study) ...[
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _pickSubject,
-                icon: const Icon(Icons.link, size: 18),
-                label: Text(
-                  _subjectName == null
-                      ? 'সিলেবাসের বিষয় যুক্ত করো (ঐচ্ছিক)'
-                      : 'বিষয়: $_subjectName',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'যুক্ত করলে সাপ্তাহিক সামারিতে এই বিষয়ে পরীক্ষার ফলাফলও দেখাবে।',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _pickTime(true),
-                    child: Text('শুরু: ${_formatTime(_start)}'),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD6D8DC),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _pickTime(false),
-                    child: Text('শেষ: ${_formatTime(_end)}'),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                editing ? 'ব্লক এডিট' : 'নতুন ব্লক',
+                style: dsText(18, weight: FontWeight.w700),
+              ),
+              const SizedBox(height: 16),
+              Text('নাম', style: label),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _title,
+                style: dsText(15),
+                decoration: InputDecoration(
+                  hintText: 'যেমন: আন্তর্জাতিক বিষয়াবলি',
+                  filled: true,
+                  fillColor: AppColors.paper,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  border: field,
+                  enabledBorder: field,
+                  focusedBorder: field.copyWith(
+                    borderSide: const BorderSide(
+                      color: AppColors.brand,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('ধরন', style: label),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final c in RoutineBlockCategory.values)
+                    DsChip(
+                      label: c.label,
+                      selected: c == _cat,
+                      onTap: () => setState(() => _cat = c),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              DsGrid(
+                children: [
+                  _timeBox('শুরু', _start, () => _pickTime(true)),
+                  _timeBox('শেষ', _end, () => _pickTime(false)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: Text('কোন দিন', style: label)),
+                  _link(
+                    'প্রতিদিন',
+                    () => setState(() => _days = routineWeekOrder.toSet()),
+                  ),
+                  const SizedBox(width: 12),
+                  _link(
+                    'শনি–বৃহঃ',
+                    () => setState(() => _days = routineWorkWeek.toSet()),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  for (final (i, d) in routineWeekOrder.indexed) ...[
+                    if (i > 0) const SizedBox(width: 4),
+                    Expanded(child: _dayToggle(d)),
+                  ],
+                ],
+              ),
+              if (_cat == RoutineBlockCategory.study) ...[
+                const SizedBox(height: 16),
+                Material(
+                  color: AppColors.paper,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(
+                      color: AppColors.lineStrong,
+                      width: 1.5,
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: _pickSubject,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'সিলেবাসের বিষয় (ঐচ্ছিক)',
+                                  style: dsText(12, color: AppColors.muted),
+                                ),
+                                Text(
+                                  _subjectName ?? 'কোনো বিষয় বাছাই করা হয়নি',
+                                  style: dsText(15, weight: FontWeight.w600),
+                                ),
+                                Text(
+                                  'সাপ্তাহিক সামারিতে এই বিষয়ের পরীক্ষার ফলও দেখাবে',
+                                  style: dsText(12, color: AppColors.muted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(LucideIcons.chevronDown, size: 16),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: List.generate(7, (i) {
-                final day = i + 1;
-                final selected = _days.contains(day);
-                return FilterChip(
-                  label: Text(_dayLabels[i]),
-                  selected: selected,
-                  onSelected: (value) {
-                    setState(() {
-                      if (value) {
-                        _days.add(day);
-                      } else {
-                        _days.remove(day);
-                      }
-                    });
-                  },
-                );
-              }),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _save,
-                child: const Text('যুক্ত করো'),
+              const SizedBox(height: 16),
+              DsButton(
+                label: editing ? 'সেভ করো' : 'যুক্ত করো',
+                height: 50,
+                fontSize: 16,
+                onPressed: _submit,
+              ),
+              if (editing) ...[
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).pop(const BlockSheetResult.delete()),
+                  child: Text(
+                    'ব্লকটা মুছে দাও',
+                    style: dsText(
+                      14,
+                      weight: FontWeight.w600,
+                      color: AppColors.danger,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _timeBox(String label, String value, VoidCallback onTap) {
+    return Material(
+      color: AppColors.paper,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.lineStrong, width: 1.5),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          alignment: Alignment.centerLeft,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: dsText(12, color: AppColors.muted)),
+              Text(
+                bnClock12(value),
+                style: dsText(16, weight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _link(String text, VoidCallback onTap) => GestureDetector(
+    onTap: onTap,
+    child: Text(
+      text,
+      style: dsText(13, weight: FontWeight.w600, color: AppColors.brand),
+    ),
+  );
+
+  Widget _dayToggle(int d) {
+    final on = _days.contains(d);
+    return Semantics(
+      button: true,
+      selected: on,
+      child: Material(
+        color: on ? AppColors.brand : AppColors.paper,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: on
+              ? BorderSide.none
+              : const BorderSide(color: Color(0xFFDADDE1)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => setState(() => on ? _days.remove(d) : _days.add(d)),
+          child: SizedBox(
+            height: 40,
+            child: Center(
+              child: Text(
+                weekdayShort(d),
+                style: dsText(
+                  12,
+                  weight: on ? FontWeight.w600 : FontWeight.w400,
+                  color: on ? Colors.white : AppColors.ink,
+                ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -43,12 +43,14 @@ class AccountApiService {
     required String name,
     required String email,
     required String password,
+    String? phone,
   }) async {
     return _authenticate(
       '/v1/auth/register',
       email: email,
       password: password,
       name: name,
+      phone: phone,
     );
   }
 
@@ -57,6 +59,7 @@ class AccountApiService {
     required String email,
     required String password,
     String? name,
+    String? phone,
   }) async {
     final response = _object(
       await _request(
@@ -66,6 +69,7 @@ class AccountApiService {
           'email': email.trim(),
           'password': password,
           if (name != null) 'name': name.trim(),
+          if (phone != null) 'phone': phone.trim(),
         },
         authenticated: false,
       ),

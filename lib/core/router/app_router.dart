@@ -2,8 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/views/auth_gate.dart';
+import '../../features/bcs/data/bcs_models.dart';
+import '../../features/bcs/views/analysis_screen.dart';
+import '../../features/bcs/views/bcs_screen.dart';
+import '../../features/bcs/views/competition_screen.dart';
+import '../../features/bcs/views/edition_screen.dart';
+import '../../features/bcs/views/merit_screen.dart';
+import '../../features/bcs/views/practice_screen.dart';
+import '../../features/bcs/views/read_listen_screen.dart';
+import '../../features/bcs/views/schedule_screen.dart';
+import '../../features/bcs/views/subject_pyq_screen.dart';
+import '../../features/bcs/views/syllabus_screen.dart';
+import '../../features/learning/views/practice_hub_screen.dart';
 import '../../features/auth/views/edit_profile_screen.dart';
 import '../../features/auth/views/login_screen.dart';
+import '../../features/auth/views/signup_screen.dart';
 import '../../features/auth/views/profile_setup_screen.dart';
 import '../../features/dashboard/views/leaderboard_view.dart';
 import '../../features/dashboard/views/main_navigation_hub.dart';
@@ -40,9 +53,30 @@ final GoRouter appRouter = GoRouter(
   routes: [
     GoRoute(path: '/', builder: (context, state) => const AuthGate()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
     GoRoute(
       path: '/profile-setup',
       builder: (context, state) => const ProfileSetupScreen(),
+    ),
+    // Paper modes run full screen, without the bottom nav.
+    GoRoute(
+      path: '/bcs/:edition/practice',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) =>
+          PracticeScreen(number: _edition(state), selection: _selection(state)),
+    ),
+    GoRoute(
+      path: '/bcs/:edition/read',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => ReadListenScreen(
+        number: _edition(state),
+        selection: _selection(state),
+      ),
+    ),
+    GoRoute(
+      path: '/bcs/:edition/compete',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => CompetitionScreen(number: _edition(state)),
     ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
@@ -61,11 +95,50 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
-          path: '/notices',
+          path: '/practice',
           pageBuilder: (context, state) => NoTransitionPage(
             key: state.pageKey,
-            child: const NoticesScreen(),
+            child: const PracticeHubScreen(),
           ),
+        ),
+        GoRoute(
+          path: '/bcs',
+          builder: (context, state) => const BcsScreen(),
+          routes: [
+            GoRoute(
+              path: 'pyq',
+              builder: (context, state) => SubjectPyqScreen(
+                initialSubject: state.uri.queryParameters['subject'],
+              ),
+            ),
+            GoRoute(
+              path: ':edition',
+              builder: (context, state) =>
+                  EditionScreen(number: _edition(state)),
+              routes: [
+                GoRoute(
+                  path: 'schedule',
+                  builder: (context, state) =>
+                      ScheduleScreen(number: _edition(state)),
+                ),
+                GoRoute(
+                  path: 'merit',
+                  builder: (context, state) =>
+                      MeritScreen(number: _edition(state)),
+                ),
+                GoRoute(
+                  path: 'analysis',
+                  builder: (context, state) =>
+                      AnalysisScreen(number: _edition(state)),
+                ),
+                GoRoute(
+                  path: 'syllabus',
+                  builder: (context, state) =>
+                      SyllabusScreen(number: _edition(state)),
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(
           path: '/profile',
@@ -115,6 +188,10 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
       ],
+    ),
+    GoRoute(
+      path: '/notices',
+      builder: (context, state) => const NoticesScreen(),
     ),
     GoRoute(
       path: '/exam/:examId',
@@ -182,3 +259,11 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 );
+
+int _edition(GoRouterState state) =>
+    int.tryParse(state.pathParameters['edition'] ?? '') ?? 0;
+
+PaperSelection _selection(GoRouterState state) {
+  final extra = state.extra;
+  return extra is PaperSelection ? extra : PaperSelection.all;
+}

@@ -1,0 +1,461 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/bangla_digits.dart';
+import '../../../core/widgets/ds.dart';
+import '../../exam/services/question_tts_service.dart';
+import '../data/bcs_models.dart';
+import '../data/bcs_api.dart';
+import 'bcs_async.dart';
+import 'bcs_format.dart';
+
+String selectionSubtitle(PaperSelection s, int count) {
+  final topic = s.topicId == 'all' ? '' : ' · ${s.topicLabel}';
+  return '${s.subjectLabel}$topic · ${bn(count)} প্রশ্ন';
+}
+
+/// Mode ২: অনুশীলন. Tap an option and see right/wrong and the explanation
+/// at once. Not timed and not ranked.
+class PracticeScreen extends ConsumerWidget {
+  final int number;
+  final PaperSelection selection;
+
+  const PracticeScreen({
+    required this.number,
+    this.selection = PaperSelection.all,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final paper = ref.watch(bcsPaperProvider(number));
+    final examId = paper.value?.examId;
+    final mistakes = selection.wrongOnly && examId != null
+        ? ref.watch(bcsMistakeIdsProvider(examId))
+        : const AsyncData<Set<String>>({});
+    return BcsAsync(
+      title: bnOrdinal(number),
+      value: paper,
+      onRetry: () => ref.invalidate(bcsPaperProvider(number)),
+      builder: (paper) => BcsAsync(
+        title: bnOrdinal(number),
+        value: mistakes,
+        builder: (mistakes) {
+          final questions = selectQuestions(
+            paper,
+            selection,
+            mistakes: mistakes,
+          );
+          if (questions.isEmpty) {
+            return BcsAsync<void>(
+              title: bnOrdinal(number),
+              value: const AsyncError(BcsEmptySelection(), StackTrace.empty),
+              builder: (_) => const SizedBox(),
+            );
+          }
+          return _PracticeBody(
+            number: number,
+            selection: selection,
+            questions: questions,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PracticeBody extends ConsumerStatefulWidget {
+  final int number;
+  final PaperSelection selection;
+  final List<PaperQuestion> questions;
+
+  const _PracticeBody({
+    required this.number,
+    required this.selection,
+    required this.questions,
+  });
+
+  @override
+  ConsumerState<_PracticeBody> createState() => _PracticeScreenState();
+}
+
+class _PracticeScreenState extends ConsumerState<_PracticeBody> {
+  late final List<PaperQuestion> _questions = widget.questions;
+  late final QuestionTtsService _tts;
+  final Map<int, String> _answers = {};
+  bool _single = false;
+  int _cur = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts = ref.read(questionTtsServiceProvider);
+  }
+
+  @override
+  void dispose() {
+    _tts.stop();
+    super.dispose();
+  }
+
+  int get _right => _answers.entries
+      .where((e) => _questions[e.key].question.correctOption == e.value)
+      .length;
+
+  void _pick(int i, String key) {
+    if (_answers.containsKey(i)) return;
+    setState(() => _answers[i] = key);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = _questions.length;
+    final right = _right;
+    final wrong = _answers.length - right;
+
+    return Scaffold(
+      backgroundColor: AppColors.canvas,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                color: AppColors.paper,
+                border: Border(bottom: BorderSide(color: AppColors.line)),
+              ),
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'বন্ধ করো',
+                        onPressed: () => context.pop(),
+                        icon: const Icon(LucideIcons.x, size: 22),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${bnOrdinal(widget.number)} · অনুশীলন',
+                              style: dsText(
+                                16,
+                                weight: FontWeight.w700,
+                                height: 1.2,
+                              ),
+                            ),
+                            Text(
+                              selectionSubtitle(widget.selection, total),
+                              style: dsText(12, color: AppColors.muted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'প্রশ্ন শোনো',
+                        onPressed: () => _tts.read(
+                          _questions[_single ? _cur : 0].question,
+                          const QuestionReadOptions(
+                            readAllOptions: true,
+                            readCorrectAnswer: false,
+                            readExplanation: false,
+                          ),
+                        ),
+                        icon: const Icon(LucideIcons.volume2, size: 22),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: DsSegmented<bool>(
+                      value: _single,
+                      onChanged: (v) => setState(() => _single = v),
+                      items: const [
+                        (true, 'একটা একটা করে', LucideIcons.square),
+                        (false, 'তালিকা', LucideIcons.list),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          'ঠিক ${bn(right)}',
+                          style: dsText(
+                            12,
+                            weight: FontWeight.w600,
+                            color: AppColors.success,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Text(
+                          'ভুল ${bn(wrong)}',
+                          style: dsText(
+                            12,
+                            weight: FontWeight.w600,
+                            color: AppColors.danger,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Text(
+                          'বাকি ${bn(total - _answers.length)}',
+                          style: dsText(12, color: AppColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(child: _single ? _singleView() : _listView()),
+            _footer(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _footer() {
+    final bar = BoxDecoration(
+      color: AppColors.paper,
+      border: const Border(top: BorderSide(color: AppColors.line)),
+    );
+    if (!_single) {
+      return Container(
+        decoration: bar,
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+        child: DsButton(
+          label: 'শেষ করো ও ফল দেখো',
+          height: 48,
+          onPressed: _finish,
+        ),
+      );
+    }
+    final answered = _answers.containsKey(_cur);
+    final last = _cur == _questions.length - 1;
+    return Container(
+      decoration: bar,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: DsButton.secondary(
+              label: 'আগের',
+              height: 48,
+              fontSize: 15,
+              onPressed: _cur == 0 ? null : () => setState(() => _cur--),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: DsButton(
+              label: last
+                  ? 'শেষ করো'
+                  : answered
+                  ? 'পরের প্রশ্ন'
+                  : 'বাদ দাও',
+              height: 48,
+              onPressed: last ? _finish : () => setState(() => _cur++),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _finish() async {
+    final right = _right;
+    final wrong = _answers.length - right;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('অনুশীলন শেষ', style: dsText(18, weight: FontWeight.w700)),
+        content: Text(
+          'ঠিক ${bn(right)} · ভুল ${bn(wrong)} · বাদ ${bn(_questions.length - _answers.length)}\n'
+          'ভুলগুলো "আমার ভুল"-এ রাখা হয়েছে।',
+          style: dsText(14, height: 1.6),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('ঠিক আছে'),
+          ),
+        ],
+      ),
+    );
+    if (mounted) context.pop();
+  }
+
+  OptionState _state(int i, String key) {
+    final picked = _answers[i];
+    if (picked == null) return OptionState.idle;
+    if (key == _questions[i].question.correctOption) return OptionState.correct;
+    if (key == picked) return OptionState.wrong;
+    return OptionState.idle;
+  }
+
+  String? _note(int i, String key) {
+    final s = _state(i, key);
+    if (s == OptionState.correct) return 'সঠিক';
+    if (s == OptionState.wrong) return 'তোমার উত্তর';
+    return null;
+  }
+
+  Widget _singleView() {
+    final i = _cur;
+    final pq = _questions[i];
+    final q = pq.question;
+    final picked = _answers[i];
+    final right = picked == q.correctOption;
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      children: [
+        Text(
+          'প্রশ্ন ${bn(i + 1)} / ${bn(_questions.length)}',
+          style: dsText(13, weight: FontWeight.w600, color: AppColors.muted),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          q.questionText,
+          style: dsText(19, weight: FontWeight.w600, height: 1.5),
+        ),
+        const SizedBox(height: 14),
+        for (final o in q.options) ...[
+          OptionTile(
+            badge: o.key,
+            label: o.value,
+            state: _state(i, o.key),
+            note: _note(i, o.key),
+            onTap: () => _pick(i, o.key),
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (picked != null) ...[
+          const SizedBox(height: 6),
+          DsCard(
+            radius: 14,
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  right ? 'ঠিক হয়েছে' : 'ভুল হয়েছে, ভুলের তালিকায় রাখা হলো',
+                  style: dsText(
+                    14,
+                    weight: FontWeight.w700,
+                    color: right ? AppColors.success : AppColors.danger,
+                  ),
+                ),
+                if (q.explanation != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    q.explanation!,
+                    style: dsText(14, height: 1.55, color: AppColors.ink2),
+                  ),
+                ],
+                if (pq.appearedIn.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'এই প্রশ্ন এসেছে:',
+                        style: dsText(12, color: AppColors.muted),
+                      ),
+                      for (final e in pq.appearedIn)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.sunken,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            bnOrdinal(e),
+                            style: dsText(12, weight: FontWeight.w600),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _listView() {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      itemCount: _questions.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (_, i) {
+        final q = _questions[i].question;
+        final answered = _answers.containsKey(i);
+        return DsCard(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${bn(i + 1)}.',
+                    style: dsText(
+                      13,
+                      weight: FontWeight.w700,
+                      color: AppColors.muted,
+                      height: 1.9,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      q.questionText,
+                      style: dsText(16, weight: FontWeight.w600, height: 1.5),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              for (final o in q.options) ...[
+                OptionTile(
+                  compact: true,
+                  badge: o.key,
+                  label: o.value,
+                  state: _state(i, o.key),
+                  note: _note(i, o.key),
+                  onTap: () => _pick(i, o.key),
+                ),
+                const SizedBox(height: 6),
+              ],
+              if (answered && q.explanation != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  q.explanation!,
+                  style: dsText(13, height: 1.5, color: AppColors.ink2),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
