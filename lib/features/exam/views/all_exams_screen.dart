@@ -4,26 +4,24 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/responsive_wrapper.dart';
+import '../../../core/utils/bangla_digits.dart';
+import '../../../core/widgets/ds.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../bcs/views/bcs_format.dart';
 import '../controllers/exam_controller.dart';
 import '../data/models/exam_model.dart';
 import '../data/services/exam_api_service.dart';
 
-class _ExamWithCount {
-  final ExamModel exam;
-  final int questionCount;
-  _ExamWithCount(this.exam, this.questionCount);
-}
-
-final allExamsProvider = FutureProvider<List<_ExamWithCount>>((ref) async {
+/// Every published exam the admin has made (job solutions, model tests).
+final allExamsProvider = FutureProvider<List<ExamModel>>((ref) async {
   final service = ExamApiService(
     accountApi: ref.watch(accountApiServiceProvider),
   );
-  final exams = await service.getExams(publishedOnly: true);
-  return exams.map((exam) => _ExamWithCount(exam, exam.questionCount)).toList();
+  return service.getExams(publishedOnly: true);
 });
 
+/// জব সল্যুশন: the list of published exams; a tap opens a sheet to start the
+/// exam or, once it has ended, to read the answer key.
 class AllExamsScreen extends ConsumerWidget {
   const AllExamsScreen({super.key});
 
@@ -32,277 +30,250 @@ class AllExamsScreen extends ConsumerWidget {
     final examsAsync = ref.watch(allExamsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('All Exams')),
-      body: ResponsiveWrapper(
-        child: examsAsync.when(
-          data: (allExams) {
-            if (allExams.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(LucideIcons.file, size: 64, color: Colors.grey[300]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No exams available',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                    ),
-                  ],
-                ),
-              );
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              itemCount: allExams.length,
-              itemBuilder: (context, index) {
-                final item = allExams[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildExamCard(
-                    context,
-                    ref,
-                    item.exam,
-                    item.questionCount,
-                  ),
-                );
-              },
+      backgroundColor: AppColors.canvas,
+      appBar: const DsHeader(
+        title: 'জব সল্যুশন',
+        subtitle: 'সব নিয়োগ পরীক্ষা',
+      ),
+      body: examsAsync.when(
+        data: (exams) {
+          if (exams.isEmpty) {
+            return const _Message(
+              icon: LucideIcons.fileText,
+              text: 'এখনো কোনো পরীক্ষা প্রকাশ হয়নি',
             );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('Error: $err')),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildExamCard(
-    BuildContext context,
-    WidgetRef ref,
-    ExamModel exam,
-    int questionCount,
-  ) {
-    final minutes = exam.durationSeconds ~/ 60;
-    final hours = minutes ~/ 60;
-    final mins = minutes % 60;
-    final timeStr = hours > 0 ? '${hours}h $mins m' : '$mins min';
-    final dateStr = _formatDate(exam.createdAt);
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => _showExamInfoDialog(context, ref, exam),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+          }
+          return RefreshIndicator(
+            onRefresh: () => ref.refresh(allExamsProvider.future),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              children: [
+                SectionLabel('${bn(exams.length)}টি পরীক্ষা'),
+                const SizedBox(height: 8),
+                DsListCard(
+                  children: [for (final e in exams) _ExamRow(exam: e)],
                 ),
-                child: const Icon(
-                  LucideIcons.file,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            exam.title.isNotEmpty ? exam.title : ' ',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '[$dateStr]',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          timeStr,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 13,
-                          ),
-                        ),
-                        Text(
-                          '  ·  ',
-                          style: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 13,
-                          ),
-                        ),
-                        Text(
-                          '$questionCount questions',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, size: 20, color: Colors.grey[400]),
-            ],
+              ],
+            ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => _Message(
+          icon: LucideIcons.wifiOff,
+          text: 'পরীক্ষার তালিকা আনা যায়নি',
+          action: DsSmallButton(
+            label: 'আবার চেষ্টা করো',
+            onPressed: () => ref.invalidate(allExamsProvider),
           ),
         ),
       ),
     );
   }
+}
 
-  String _formatDate(DateTime dt) {
-    return '${dt.day}/${dt.month}/${dt.year}';
-  }
+String _duration(int seconds) {
+  final minutes = seconds ~/ 60;
+  final h = minutes ~/ 60;
+  final m = minutes % 60;
+  if (h == 0) return '${bn(m)} মিনিট';
+  if (m == 0) return '${bn(h)} ঘণ্টা';
+  return '${bn(h)} ঘণ্টা ${bn(m)} মিনিট';
+}
 
-  void _showExamInfoDialog(
-    BuildContext context,
-    WidgetRef ref,
-    ExamModel exam,
-  ) async {
-    final service = ExamApiService(
-      accountApi: ref.read(accountApiServiceProvider),
-    );
-    final questions = await service.getExamQuestions(exam.examId);
-    if (questions.isEmpty) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No questions in this exam')),
-        );
-      }
-      return;
-    }
+String _meta(ExamModel exam) {
+  final date = exam.heldOn ?? exam.scheduledDate ?? exam.createdAt;
+  return '${bnDayMonth(date)} ${bn(date.year)} · '
+      '${bn(exam.questionCount)}টি প্রশ্ন · ${_duration(exam.durationSeconds)}';
+}
 
-    if (!context.mounted) return;
+class _ExamRow extends ConsumerWidget {
+  final ExamModel exam;
 
-    final action = await showDialog<String>(
-      context: context,
-      builder: (ctx) => SizedBox(
-        width: 500,
-        child: AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text(exam.title.isNotEmpty ? exam.title : 'Exam'),
+  const _ExamRow({required this.exam});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return InkWell(
+      onTap: () => _openSheet(context, ref, exam),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            const IconSquare(LucideIcons.fileText),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    exam.title.isNotEmpty ? exam.title : 'নামহীন পরীক্ষা',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: dsText(15, weight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _meta(exam),
+                    style: dsText(12, color: AppColors.muted),
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(ctx),
-              ),
+            ),
+            if (!exam.hasEnded) ...[
+              const SizedBox(width: 8),
+              const LivePill('চলছে'),
             ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.timer_outlined, size: 18, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Duration: ${exam.durationSeconds ~/ 60} minutes',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.quiz_outlined, size: 18, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Questions: ${questions.length}',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.remove_circle_outline,
-                    size: 18,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Negative: ${exam.negativeMarks}',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
-              if (exam.isPublished)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        size: 18,
-                        color: Colors.green[600],
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Published',
-                        style: TextStyle(color: Colors.green[600]),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          actions: [
-            if (exam.hasEnded)
-              OutlinedButton(
-                onPressed: () => Navigator.pop(ctx, 'answers'),
-                child: const Text('View Answer Key'),
-              ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, 'start'),
-              child: Text(exam.hasEnded ? 'Retake Exam' : 'Start Exam'),
+            const SizedBox(width: 4),
+            const Icon(
+              LucideIcons.chevronRight,
+              size: 18,
+              color: AppColors.muted,
             ),
           ],
         ),
       ),
     );
+  }
+}
 
+Future<void> _openSheet(
+  BuildContext context,
+  WidgetRef ref,
+  ExamModel exam,
+) async {
+  final action = await showModalBottomSheet<String>(
+    context: context,
+    useSafeArea: true,
+    backgroundColor: AppColors.paper,
+    barrierColor: const Color(0x73101216),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+    ),
+    builder: (ctx) => _ExamSheet(exam: exam),
+  );
+  if (action == null || !context.mounted) return;
+
+  if (action == 'answers') {
+    context.push(
+      '/exam/${exam.examId}/answers'
+      '?title=${Uri.encodeQueryComponent(exam.title)}',
+    );
+    return;
+  }
+
+  final service = ExamApiService(
+    accountApi: ref.read(accountApiServiceProvider),
+  );
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    final questions = await service.getExamQuestions(exam.examId);
     if (!context.mounted) return;
-
-    if (action == 'start') {
-      ref.read(examControllerProvider.notifier).startExam(exam, questions);
-      if (context.mounted) context.go('/exam/${exam.examId}');
-    } else if (action == 'answers') {
-      context.push(
-        '/exam/${exam.examId}/answers'
-        '?title=${Uri.encodeQueryComponent(exam.title)}',
+    if (questions.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('এই পরীক্ষায় এখনো প্রশ্ন নেই')),
       );
+      return;
     }
+    ref.read(examControllerProvider.notifier).startExam(exam, questions);
+    context.go('/exam/${exam.examId}');
+  } catch (_) {
+    messenger.showSnackBar(
+      const SnackBar(content: Text('প্রশ্ন আনা যায়নি। আবার চেষ্টা করো')),
+    );
+  }
+}
+
+class _ExamSheet extends StatelessWidget {
+  final ExamModel exam;
+
+  const _ExamSheet({required this.exam});
+
+  @override
+  Widget build(BuildContext context) {
+    final negative = exam.negativeMarks == 0
+        ? 'নেই'
+        : '${bnScore(exam.negativeMarks)} করে';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            exam.title.isNotEmpty ? exam.title : 'নামহীন পরীক্ষা',
+            style: dsText(18, weight: FontWeight.w700, height: 1.3),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: StatBox(
+                  label: 'প্রশ্ন',
+                  value: bn(exam.questionCount),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: StatBox(
+                  label: 'সময়',
+                  value: _duration(exam.durationSeconds),
+                  valueSize: 15,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: StatBox(
+                  label: 'নেগেটিভ',
+                  value: negative,
+                  valueSize: 15,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          DsButton(
+            label: exam.hasEnded ? 'আবার দাও' : 'পরীক্ষা শুরু করো',
+            onPressed: () => Navigator.pop(context, 'start'),
+          ),
+          if (exam.hasEnded) ...[
+            const SizedBox(height: 8),
+            DsButton.secondary(
+              label: 'উত্তরপত্র দেখো',
+              onPressed: () => Navigator.pop(context, 'answers'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Message extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Widget? action;
+
+  const _Message({required this.icon, required this.text, this.action});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 40, color: AppColors.subtle),
+            const SizedBox(height: 12),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: dsText(15, color: AppColors.muted),
+            ),
+            if (action != null) ...[const SizedBox(height: 14), action!],
+          ],
+        ),
+      ),
+    );
   }
 }
