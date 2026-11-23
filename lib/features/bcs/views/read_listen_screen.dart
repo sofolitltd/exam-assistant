@@ -1,3 +1,4 @@
+import '../../../core/widgets/answer_caveat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -235,6 +236,7 @@ class _ReadListenScreenState extends ConsumerState<_ReadListenBody> {
               _option(o.key, o.value, _showAns && o.key == q.correctOption),
               const SizedBox(height: 6),
             ],
+            if (_showAns) AnswerCaveat(question: q),
             if (_showAns && q.explanation != null) ...[
               const SizedBox(height: 4),
               Text(

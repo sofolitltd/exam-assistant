@@ -24,6 +24,8 @@ class QuestionModel {
   final String? explanation;
   final String? source;
   final String? sourceYear;
+  final bool timeSensitive;
+  final String answerStatus;
   final DateTime createdAt;
 
   QuestionModel({
@@ -37,6 +39,8 @@ class QuestionModel {
     this.explanation,
     this.source,
     this.sourceYear,
+    this.timeSensitive = false,
+    this.answerStatus = 'confirmed',
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -55,6 +59,8 @@ class QuestionModel {
       explanation: map['explanation'] as String?,
       source: map['source'] as String?,
       sourceYear: map['sourceYear'] as String?,
+      timeSensitive: map['timeSensitive'] as bool? ?? false,
+      answerStatus: map['answerStatus'] as String? ?? 'confirmed',
       createdAt:
           DateTime.tryParse(createdAtValue as String? ?? '') ?? DateTime.now(),
     );

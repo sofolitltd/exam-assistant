@@ -26,9 +26,13 @@ import '../../features/learning/views/exam_leaderboard_screen.dart';
 import '../../features/learning/views/listen_screen.dart';
 import '../../features/learning/views/mistakes_practice_screen.dart';
 import '../../features/learning/views/progress_screen.dart';
+import '../../features/learning/views/review_screen.dart';
+import '../../features/learning/views/strategy_screen.dart';
+import '../../features/learning/views/study_first_screen.dart';
 import '../../features/routine/views/routine_builder_screen.dart';
 import '../../features/routine/views/routine_home_screen.dart';
 import '../../features/routine/views/study_groups_screen.dart';
+import '../../features/routine/views/study_plan_screen.dart';
 import '../../features/routine/views/weekly_summary_screen.dart';
 import '../../features/exam/views/all_exams_screen.dart';
 import '../../features/exam/views/exam_answer_key_screen.dart';
@@ -268,6 +272,22 @@ final GoRouter appRouter = GoRouter(
           title: query['title'],
         );
       },
+    ),
+    GoRoute(
+      path: '/practice/review',
+      builder: (context, state) => const ReviewScreen(),
+    ),
+    GoRoute(
+      path: '/study-plan',
+      builder: (context, state) => const StudyPlanScreen(),
+    ),
+    GoRoute(
+      path: '/strategy',
+      builder: (context, state) => const StrategyScreen(),
+    ),
+    GoRoute(
+      path: '/study-first',
+      builder: (context, state) => const StudyFirstScreen(),
     ),
     GoRoute(
       path: '/progress',

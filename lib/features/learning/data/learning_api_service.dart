@@ -36,6 +36,45 @@ class LearningApiService {
     return _list(json, SubjectPerformance.fromJson);
   }
 
+  Future<TopicInsights> getTopicInsights({int papers = 10}) async {
+    final json = await _api.getApiJson(
+      '/v1/insights/topics',
+      query: {'papers': '$papers'},
+    );
+    return TopicInsights.fromJson(json);
+  }
+
+  Future<DueReviews> getDueReviews({int limit = 20}) async {
+    final json = await _api.getApiJson(
+      '/v1/review/due',
+      query: {'limit': '$limit'},
+    );
+    return DueReviews.fromJson(json);
+  }
+
+  Future<ReviewAnswerResult> answerReview({
+    required String questionId,
+    required String selectedKey,
+  }) async {
+    final json = await _api.postApiJson('/v1/review/answers', {
+      'questionId': questionId,
+      'selectedKey': selectedKey,
+    });
+    return ReviewAnswerResult.fromJson(json);
+  }
+
+  Future<List<SubjectStrategy>> getStrategy({int days = 90}) async {
+    final json = await _api.getApiJson(
+      '/v1/insights/strategy',
+      query: {'days': '$days'},
+    );
+    final items = (json as Map)['items'] as List? ?? const [];
+    return [
+      for (final item in items)
+        SubjectStrategy.fromJson(Map<String, dynamic>.from(item as Map)),
+    ];
+  }
+
   List<T> _list<T>(dynamic json, T Function(Map<String, dynamic>) parse) {
     if (json is! List) {
       throw const FormatException('Expected a list response.');

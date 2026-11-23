@@ -1,3 +1,4 @@
+import '../../../core/utils/question_timer.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -71,6 +72,7 @@ class _CompetitionScreenState extends ConsumerState<_CompetitionBody> {
 
   final Map<int, String> _answers = {};
   Timer? _timer;
+  final _qTimer = QuestionTimer();
   bool _single = false;
   int _cur = 0;
   bool _submitted = false;
@@ -98,6 +100,15 @@ class _CompetitionScreenState extends ConsumerState<_CompetitionBody> {
   void _pick(int i, String key) {
     if (_answers.containsKey(i)) return;
     setState(() => _answers[i] = key);
+    // The answer is locked; stop the clock for this question.
+    if (_single && i == _cur) _qTimer.show(null);
+  }
+
+  /// Moves to question [i] and starts timing it if it is still open. Time is
+  /// only measured in one-at-a-time mode, where one question is on screen.
+  void _go(int i) {
+    setState(() => _cur = i);
+    _qTimer.show(_single && !_answers.containsKey(i) ? i : null);
   }
 
   Future<bool> _confirm(String title, String body, String yes) async {
@@ -136,6 +147,7 @@ class _CompetitionScreenState extends ConsumerState<_CompetitionBody> {
     }
     _submitted = true;
     _timer?.cancel();
+    final times = _qTimer.finish();
 
     var right = 0;
     _answers.forEach((i, key) {
@@ -157,6 +169,11 @@ class _CompetitionScreenState extends ConsumerState<_CompetitionBody> {
               answers: {
                 for (final e in _answers.entries)
                   _questions[e.key].question.id: e.value,
+              },
+              timeSpentMs: {
+                for (final e in times.entries)
+                  if (_answers.containsKey(e.key) && e.value > 0)
+                    _questions[e.key].question.id: e.value,
               },
             );
         score = (result['score'] as num? ?? score).toDouble();
@@ -295,7 +312,10 @@ class _CompetitionScreenState extends ConsumerState<_CompetitionBody> {
             padding: const EdgeInsets.only(left: 8),
             child: DsSegmented<bool>(
               value: _single,
-              onChanged: (v) => setState(() => _single = v),
+              onChanged: (v) {
+                setState(() => _single = v);
+                _qTimer.show(v && !_answers.containsKey(_cur) ? _cur : null);
+              },
               items: const [
                 (true, 'একটা একটা করে', LucideIcons.square),
                 (false, 'তালিকা', LucideIcons.list),
@@ -482,7 +502,7 @@ class _CompetitionScreenState extends ConsumerState<_CompetitionBody> {
               label: 'আগের',
               height: 48,
               fontSize: 15,
-              onPressed: _cur == 0 ? null : () => setState(() => _cur--),
+              onPressed: _cur == 0 ? null : () => _go(_cur - 1),
             ),
           ),
           const SizedBox(width: 8),
@@ -496,7 +516,7 @@ class _CompetitionScreenState extends ConsumerState<_CompetitionBody> {
                   : 'ফাঁকা রেখে পরের',
               height: 48,
               background: locked || last ? AppColors.brand : AppColors.ink2,
-              onPressed: last ? _submit : () => setState(() => _cur++),
+              onPressed: last ? _submit : () => _go(_cur + 1),
             ),
           ),
         ],

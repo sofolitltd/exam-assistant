@@ -1,3 +1,4 @@
+import '../../../core/widgets/answer_caveat.dart';
 import 'package:flutter/material.dart';
 import 'package:tex_text/tex_text.dart';
 
@@ -147,6 +148,7 @@ class ReviewQuestionCard extends StatelessWidget {
               ),
             );
           }),
+          AnswerCaveat(question: question),
           if (explanation.isNotEmpty) ...[
             const SizedBox(height: 6),
             Container(

@@ -20,6 +20,12 @@ class PracticeHubScreen extends ConsumerWidget {
     final mistakes = ref.watch(mistakesProvider(null));
     final runningNumber = ref.watch(bcsRunningNumberProvider);
     final papers = ref.watch(bcsPapersReadyProvider).value ?? const [];
+    final summary = ref.watch(dueReviewsProvider).value?.summary;
+    final dueText = summary == null
+        ? 'ভুল প্রশ্ন নির্দিষ্ট ব্যবধানে আবার দেখো'
+        : summary.due == 0
+        ? 'আজ কিছু বাকি নেই'
+        : '${bn(summary.due)}টি প্রশ্ন আজ আবার দেখার সময়';
     final mistakesText = mistakes.items.isEmpty
         ? (mistakes.isLoading ? 'লোড হচ্ছে…' : 'কোনো ভুল বাকি নেই। দারুণ!')
         : '${bn(mistakes.items.length)}${mistakes.hasMore ? '+' : ''}টি '
@@ -54,6 +60,35 @@ class PracticeHubScreen extends ConsumerWidget {
                 children: [
                   const SectionLabel('আগে এটা'),
                   DsCard(
+                    onTap: () => context.push('/practice/review'),
+                    child: Row(
+                      children: [
+                        const IconSquare(LucideIcons.repeat),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'আজকের রিভিশন',
+                                style: dsText(15, weight: FontWeight.w600),
+                              ),
+                              Text(
+                                dueText,
+                                style: dsText(12, color: AppColors.muted),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          LucideIcons.chevronRight,
+                          size: 18,
+                          color: AppColors.muted,
+                        ),
+                      ],
+                    ),
+                  ),
+                  DsCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -70,6 +105,35 @@ class PracticeHubScreen extends ConsumerWidget {
                         DsButton(
                           label: 'ভুলগুলো আবার দাও',
                           onPressed: () => context.push('/practice/mistakes'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  DsCard(
+                    onTap: () => context.push('/study-first'),
+                    child: Row(
+                      children: [
+                        const IconSquare(LucideIcons.target),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'কোনটা আগে পড়ব',
+                                style: dsText(15, weight: FontWeight.w600),
+                              ),
+                              Text(
+                                'গত বিসিএসগুলোর ধরন আর তোমার দুর্বলতা মিলিয়ে',
+                                style: dsText(12, color: AppColors.muted),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          LucideIcons.chevronRight,
+                          size: 18,
+                          color: AppColors.muted,
                         ),
                       ],
                     ),
@@ -116,6 +180,11 @@ class PracticeHubScreen extends ConsumerWidget {
                         title: 'বিষয়ভিত্তিক অগ্রগতি',
                         subtitle: 'কোথায় দুর্বল দেখো',
                         onTap: () => context.push('/progress'),
+                      ),
+                      InfoTile(
+                        title: 'স্কোর কৌশল',
+                        subtitle: 'কোথায় আন্দাজ করা ঠিক',
+                        onTap: () => context.push('/strategy'),
                       ),
                       InfoTile(
                         title: 'সিলেবাস',

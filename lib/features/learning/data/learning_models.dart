@@ -156,3 +156,219 @@ class SubjectPerformance {
         accuracy: (json['accuracy'] as num? ?? 0).toDouble(),
       );
 }
+
+/// One syllabus topic with how often it appeared in recent past papers and
+/// how the user does on it. `priority` is "study this first" (high first).
+class TopicInsight {
+  final int nodeId;
+  final int syllabusId;
+  final String name;
+  final String subjectName;
+  final int total;
+  final int papers;
+  final double avgPerPaper;
+  final int lastEdition;
+  final int attempted;
+  final double accuracy;
+  final double priority;
+  final String focusReason;
+
+  const TopicInsight({
+    required this.nodeId,
+    required this.syllabusId,
+    required this.name,
+    required this.subjectName,
+    required this.total,
+    required this.papers,
+    required this.avgPerPaper,
+    required this.lastEdition,
+    required this.attempted,
+    required this.accuracy,
+    required this.priority,
+    required this.focusReason,
+  });
+
+  factory TopicInsight.fromJson(Map<String, dynamic> json) => TopicInsight(
+    nodeId: (json['nodeId'] as num).toInt(),
+    syllabusId: (json['syllabusId'] as num).toInt(),
+    name: json['name'] as String? ?? '',
+    subjectName: json['subjectName'] as String? ?? '',
+    total: (json['total'] as num).toInt(),
+    papers: (json['papers'] as num).toInt(),
+    avgPerPaper: (json['avgPerPaper'] as num).toDouble(),
+    lastEdition: (json['lastEdition'] as num).toInt(),
+    attempted: (json['attempted'] as num).toInt(),
+    accuracy: (json['accuracy'] as num).toDouble(),
+    priority: (json['priority'] as num).toDouble(),
+    focusReason: json['focusReason'] as String? ?? 'ok',
+  );
+}
+
+class TopicInsights {
+  final int papers;
+  final List<TopicInsight> items;
+
+  const TopicInsights({required this.papers, required this.items});
+
+  factory TopicInsights.fromJson(dynamic json) {
+    final map = Map<String, dynamic>.from(json as Map);
+    return TopicInsights(
+      papers: (map['papers'] as num?)?.toInt() ?? 0,
+      items: [
+        for (final item in (map['items'] as List? ?? const []))
+          TopicInsight.fromJson(Map<String, dynamic>.from(item as Map)),
+      ],
+    );
+  }
+}
+
+/// A question to recall from memory. Carries no answer: the server returns
+/// it after the learner commits (see [ReviewAnswerResult]).
+class ReviewQuestion {
+  final String id;
+  final String questionText;
+  final String subject;
+  final List<QuestionOption> options;
+  final int box;
+
+  const ReviewQuestion({
+    required this.id,
+    required this.questionText,
+    required this.subject,
+    required this.options,
+    required this.box,
+  });
+
+  factory ReviewQuestion.fromJson(Map<String, dynamic> json) => ReviewQuestion(
+    id: json['id'] as String? ?? '',
+    questionText: json['questionText'] as String? ?? '',
+    subject: json['subject'] as String? ?? '',
+    options: [
+      for (final o in (json['options'] as List? ?? const []))
+        QuestionOption.fromMap(Map<String, dynamic>.from(o as Map)),
+    ],
+    box: (json['box'] as num?)?.toInt() ?? 0,
+  );
+}
+
+class ReviewSummary {
+  final int due;
+  final int learning;
+  final int mastered;
+
+  const ReviewSummary({
+    required this.due,
+    required this.learning,
+    required this.mastered,
+  });
+
+  factory ReviewSummary.fromJson(Map<String, dynamic> json) => ReviewSummary(
+    due: (json['due'] as num?)?.toInt() ?? 0,
+    learning: (json['learning'] as num?)?.toInt() ?? 0,
+    mastered: (json['mastered'] as num?)?.toInt() ?? 0,
+  );
+}
+
+class DueReviews {
+  final ReviewSummary summary;
+  final List<ReviewQuestion> items;
+
+  const DueReviews({required this.summary, required this.items});
+
+  factory DueReviews.fromJson(dynamic json) {
+    final map = Map<String, dynamic>.from(json as Map);
+    return DueReviews(
+      summary: ReviewSummary.fromJson(
+        Map<String, dynamic>.from(map['summary'] as Map? ?? const {}),
+      ),
+      items: [
+        for (final item in (map['items'] as List? ?? const []))
+          ReviewQuestion.fromJson(Map<String, dynamic>.from(item as Map)),
+      ],
+    );
+  }
+}
+
+class ReviewAnswerResult {
+  final bool isCorrect;
+  final List<String> correctOptionKeys;
+  final String? explanation;
+  final int box;
+  final bool mastered;
+  final DateTime? nextDueAt;
+
+  const ReviewAnswerResult({
+    required this.isCorrect,
+    required this.correctOptionKeys,
+    required this.explanation,
+    required this.box,
+    required this.mastered,
+    required this.nextDueAt,
+  });
+
+  factory ReviewAnswerResult.fromJson(dynamic json) {
+    final map = Map<String, dynamic>.from(json as Map);
+    return ReviewAnswerResult(
+      isCorrect: map['isCorrect'] as bool? ?? false,
+      correctOptionKeys: List<String>.from(
+        map['correctOptionKeys'] as List? ?? const [],
+      ),
+      explanation: map['explanation'] as String?,
+      box: (map['box'] as num?)?.toInt() ?? 0,
+      mastered: map['mastered'] as bool? ?? false,
+      nextDueAt: DateTime.tryParse(map['nextDueAt'] as String? ?? ''),
+    );
+  }
+}
+
+/// How attempting questions has paid off in one subject under negative
+/// marking. `advice` is one of need-more-data, skip-when-unsure,
+/// guess-with-care or attempt.
+class SubjectStrategy {
+  final String name;
+  final int attempted;
+  final int correct;
+  final int wrong;
+  final int skipped;
+  final double accuracy;
+  final double netScore;
+  final double lostToNegative;
+  final double breakEvenAccuracy;
+  final double expectedPerAttempt;
+  final String advice;
+  final int? avgTimeCorrectMs;
+  final int? avgTimeWrongMs;
+
+  const SubjectStrategy({
+    required this.name,
+    required this.attempted,
+    required this.correct,
+    required this.wrong,
+    required this.skipped,
+    required this.accuracy,
+    required this.netScore,
+    required this.lostToNegative,
+    required this.breakEvenAccuracy,
+    required this.expectedPerAttempt,
+    required this.advice,
+    required this.avgTimeCorrectMs,
+    required this.avgTimeWrongMs,
+  });
+
+  factory SubjectStrategy.fromJson(Map<String, dynamic> json) =>
+      SubjectStrategy(
+        name: json['name'] as String? ?? '',
+        attempted: (json['attempted'] as num).toInt(),
+        correct: (json['correct'] as num).toInt(),
+        wrong: (json['wrong'] as num).toInt(),
+        skipped: (json['skipped'] as num).toInt(),
+        accuracy: (json['accuracy'] as num).toDouble(),
+        netScore: (json['netScore'] as num).toDouble(),
+        lostToNegative: (json['lostToNegative'] as num).toDouble(),
+        breakEvenAccuracy: (json['breakEvenAccuracy'] as num).toDouble(),
+        expectedPerAttempt: (json['expectedPerAttempt'] as num).toDouble(),
+        advice: json['advice'] as String? ?? 'need-more-data',
+        avgTimeCorrectMs: (json['avgTimeCorrectMs'] as num?)?.toInt(),
+        avgTimeWrongMs: (json['avgTimeWrongMs'] as num?)?.toInt(),
+      );
+}

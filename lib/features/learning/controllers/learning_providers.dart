@@ -55,3 +55,23 @@ final subjectPerformanceByDaysProvider = FutureProvider.autoDispose
           .read(learningApiServiceProvider)
           .getSubjectPerformance(days: days);
     });
+
+/// Topics ranked by "study first" over the last [papers] general papers.
+final topicInsightsProvider = FutureProvider.autoDispose
+    .family<TopicInsights, int>((ref, papers) {
+      return ref
+          .read(learningApiServiceProvider)
+          .getTopicInsights(papers: papers);
+    });
+
+/// Wrong answers that are due for spaced review today, plus box counts.
+final dueReviewsProvider = FutureProvider.autoDispose<DueReviews>((ref) {
+  return ref.read(learningApiServiceProvider).getDueReviews();
+});
+
+/// Per-subject negative-marking strategy over the last 90 days.
+final strategyProvider = FutureProvider.autoDispose<List<SubjectStrategy>>((
+  ref,
+) {
+  return ref.read(learningApiServiceProvider).getStrategy();
+});

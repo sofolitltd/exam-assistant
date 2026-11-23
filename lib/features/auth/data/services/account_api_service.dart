@@ -180,11 +180,16 @@ class AccountApiService {
   Future<Map<String, dynamic>> submitExamResult({
     required String examId,
     required Map<String, String> answers,
+    Map<String, int>? timeSpentMs,
   }) async {
     final response = await _request(
       'POST',
       '/v1/exams/${Uri.encodeComponent(examId)}/results',
-      body: {'answers': answers},
+      body: {
+        'answers': answers,
+        if (timeSpentMs != null && timeSpentMs.isNotEmpty)
+          'timeSpentMs': timeSpentMs,
+      },
     );
     return _object(response);
   }

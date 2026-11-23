@@ -144,6 +144,35 @@ class _TodayViewState extends ConsumerState<_TodayView> {
                     blocks: blocks.length,
                     score: score,
                   ),
+                  DsCard(
+                    onTap: () => context.push('/study-plan'),
+                    child: Row(
+                      children: [
+                        const IconSquare(LucideIcons.calendarClock),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'আজকের পরিকল্পনা',
+                                style: dsText(15, weight: FontWeight.w600),
+                              ),
+                              Text(
+                                'পরীক্ষার দিন গুনে কোন বিষয়ে কত সময়',
+                                style: dsText(12, color: AppColors.muted),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          LucideIcons.chevronRight,
+                          size: 18,
+                          color: AppColors.muted,
+                        ),
+                      ],
+                    ),
+                  ),
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: SectionLabel(

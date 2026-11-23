@@ -1,3 +1,4 @@
+import '../../../core/widgets/answer_caveat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -355,6 +356,7 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
                     color: right ? AppColors.success : AppColors.danger,
                   ),
                 ),
+                AnswerCaveat(question: q),
                 if (q.explanation != null) ...[
                   const SizedBox(height: 6),
                   Text(
@@ -459,6 +461,7 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
                 ),
                 const SizedBox(height: 6),
               ],
+              if (answered) AnswerCaveat(question: q),
               if (answered && q.explanation != null) ...[
                 const SizedBox(height: 4),
                 Text(
