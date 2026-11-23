@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Exam Assistant mark: an open book with the sun rising over it. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4466EA"/>
+      <stop offset="1" stop-color="#1A2D85"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.22" cy="0.12" r="0.75">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="dot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF9A4D"/>
+      <stop offset="1" stop-color="#E4570F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
+  <g transform="translate(0 18)">
+    <circle cx="512" cy="290" r="72" fill="url(#dot)"/>
+    <path d="M480 452 C418 410 336 400 262 416 V712 C336 700 418 708 480 750 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="36" stroke-linejoin="round"/>
+    <path d="M544 452 C606 410 688 400 762 416 V712 C688 700 606 708 544 750 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="36" stroke-linejoin="round"/>
+  </g>
+</svg>

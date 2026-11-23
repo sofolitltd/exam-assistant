@@ -17,7 +17,7 @@ dependencies:
   flutter_riverpod: ^3.3.2
   riverpod_annotation: ^4.0.3
   firebase_core: ^4.11.0
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^11.2.0
   http: ^1.3.0
   google_fonts: ^8.1.0
   fl_chart: ^1.2.0
@@ -41,26 +41,27 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
+  remove_alpha_ios: true
   image_path: "assets/icon/app_icon.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#0A5448"
+  adaptive_icon_background: "assets/icon/app_icon_background.png"
   adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
   web:
     generate: true
     image_path: "assets/icon/app_icon.png"
-    background_color: "#0A5448"
-    theme_color: "#0A5448"
+    background_color: "#2446C7"
+    theme_color: "#2446C7"
 
 flutter_native_splash:
-  color: "#F5F6F2"
-  image: "assets/icon/app_icon_foreground.png"
-  color_dark: "#072E28"
-  image_dark: "assets/icon/app_icon_foreground.png"
+  color: "#F6F6F3"
+  image: "assets/icon/splash_logo.png"
+  color_dark: "#16181D"
+  image_dark: "assets/icon/splash_logo.png"
   android_12:
-    image: "assets/icon/app_icon_foreground.png"
-    icon_background_color: "#0A5448"
-    image_dark: "assets/icon/app_icon_foreground.png"
-    icon_background_color_dark: "#072E28"
+    image: "assets/icon/splash_android12.png"
+    icon_background_color: "#2446C7"
+    image_dark: "assets/icon/splash_android12.png"
+    icon_background_color_dark: "#1B379E"
   web: false
 
 flutter:

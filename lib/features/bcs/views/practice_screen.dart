@@ -120,6 +120,7 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
       backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
               decoration: const BoxDecoration(
@@ -167,6 +168,16 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
                           ),
                         ),
                         icon: const Icon(LucideIcons.volume2, size: 22),
+                      ),
+                      // Always reachable, so a long practice can stop
+                      // anywhere without scrolling to the end.
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: DsSmallButton(
+                          label: 'শেষ করো',
+                          filled: true,
+                          onPressed: _finish,
+                        ),
                       ),
                     ],
                   ),
@@ -216,7 +227,7 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
               ),
             ),
             Expanded(child: _single ? _singleView() : _listView()),
-            _footer(),
+            if (_single) _footer(),
           ],
         ),
       ),
@@ -228,17 +239,6 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
       color: AppColors.paper,
       border: const Border(top: BorderSide(color: AppColors.line)),
     );
-    if (!_single) {
-      return Container(
-        decoration: bar,
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-        child: DsButton(
-          label: 'শেষ করো ও ফল দেখো',
-          height: 48,
-          onPressed: _finish,
-        ),
-      );
-    }
     final answered = _answers.containsKey(_cur);
     final last = _cur == _questions.length - 1;
     return Container(
@@ -402,9 +402,23 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
   Widget _listView() {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      itemCount: _questions.length,
+      // The finish button sits after the last question, inside the scroll.
+      itemCount: _questions.length + 1,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, i) {
+        if (i == _questions.length) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 6, bottom: 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: DsButton(
+                label: 'শেষ করো ও ফল দেখো',
+                height: 50,
+                onPressed: _finish,
+              ),
+            ),
+          );
+        }
         final q = _questions[i].question;
         final answered = _answers.containsKey(i);
         return DsCard(

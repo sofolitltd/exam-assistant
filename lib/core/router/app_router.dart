@@ -108,8 +108,31 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: 'pyq',
               builder: (context, state) => SubjectPyqScreen(
-                initialSubject: state.uri.queryParameters['subject'],
+                initialFilter: parsePyqFilter(state.uri.queryParameters['bcs']),
               ),
+              routes: [
+                GoRoute(
+                  path: 'subject',
+                  builder: (context, state) => PyqSubjectScreen(
+                    subject: state.uri.queryParameters['name'] ?? '',
+                    initialFilter: parsePyqFilter(
+                      state.uri.queryParameters['bcs'],
+                    ),
+                  ),
+                ),
+                GoRoute(
+                  path: 'topic',
+                  builder: (context, state) {
+                    final q = state.uri.queryParameters;
+                    return PyqTopicQuestionsScreen(
+                      syllabusId: int.tryParse(q['syllabus'] ?? '') ?? 0,
+                      nodeId: int.tryParse(q['node'] ?? '') ?? 0,
+                      title: q['title'] ?? '',
+                      filter: parsePyqFilter(q['bcs']),
+                    );
+                  },
+                ),
+              ],
             ),
             GoRoute(
               path: ':edition',

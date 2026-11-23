@@ -20,6 +20,10 @@ Future<(PaperMode, PaperSelection)?> showModeSheet(
   return showModalBottomSheet<(PaperMode, PaperSelection)>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+    ),
     showDragHandle: false,
     backgroundColor: AppColors.paper,
     barrierColor: const Color(0x73101216),
@@ -87,8 +91,12 @@ class _ModeSheetState extends ConsumerState<_ModeSheet> {
       ).where((q) => mistakeIds.contains(q.question.id)).length;
     }
 
+    // Header and the start button stay put; only the subject/topic
+    // choices scroll, so a long topic list never pushes the sheet past
+    // the top of the screen.
     return SafeArea(
-      child: SingleChildScrollView(
+      top: false,
+      child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -123,43 +131,61 @@ class _ModeSheetState extends ConsumerState<_ModeSheet> {
               style: dsText(13, color: AppColors.ink2),
             ),
             const SizedBox(height: 16),
-            Text(
-              'বিষয়',
-              style: dsText(13, weight: FontWeight.w600, color: AppColors.ink2),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final s in subjects)
-                  DsChip(
-                    label: s.label,
-                    selected: s.id == _subject,
-                    onTap: () => setState(() {
-                      _subject = s.id;
-                      _topic = 'all';
-                    }),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Topic',
-              style: dsText(13, weight: FontWeight.w600, color: AppColors.ink2),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final t in topics)
-                  DsChip(
-                    label: t.$2,
-                    selected: t.$1 == topic.$1,
-                    onTap: () => setState(() => _topic = t.$1),
-                  ),
-              ],
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'বিষয়',
+                      style: dsText(
+                        13,
+                        weight: FontWeight.w600,
+                        color: AppColors.ink2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final s in subjects)
+                          DsChip(
+                            label: s.label,
+                            selected: s.id == _subject,
+                            onTap: () => setState(() {
+                              _subject = s.id;
+                              _topic = 'all';
+                            }),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Topic',
+                      style: dsText(
+                        13,
+                        weight: FontWeight.w600,
+                        color: AppColors.ink2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final t in topics)
+                          DsChip(
+                            label: t.$2,
+                            selected: t.$1 == topic.$1,
+                            onTap: () => setState(() => _topic = t.$1),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             Material(

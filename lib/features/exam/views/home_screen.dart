@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
+import '../../../core/widgets/brand_mark.dart';
 import '../../../core/widgets/ds.dart';
 import '../../bcs/data/bcs_models.dart';
 import '../../bcs/data/bcs_sample_data.dart';
@@ -169,6 +170,8 @@ class HomeTopBar extends StatelessWidget {
         padding: const EdgeInsets.only(left: 16, right: 4),
         child: Row(
           children: [
+            const BrandMark(size: 30),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Exam Assistant',

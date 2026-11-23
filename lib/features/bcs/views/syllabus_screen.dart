@@ -199,10 +199,14 @@ class _SyllabusScreenState extends ConsumerState<SyllabusScreen> {
       b = bn(_view == _View.old ? r.oldMarks : r.newMarks);
       bStyle = dsText(14, weight: FontWeight.w600);
     }
-    return row([
-      Text(r.name, style: dsText(14)),
-      right(cmp ? bn(r.oldMarks) : '', dsText(14, color: AppColors.muted)),
-      right(b, bStyle),
-    ], onTap: () => context.push('/bcs/pyq?subject=${r.id}'));
+    return row(
+      [
+        Text(r.name, style: dsText(14)),
+        right(cmp ? bn(r.oldMarks) : '', dsText(14, color: AppColors.muted)),
+        right(b, bStyle),
+      ],
+      onTap: () =>
+          context.push('/bcs/pyq/subject?name=${Uri.encodeComponent(r.name)}'),
+    );
   }
 }

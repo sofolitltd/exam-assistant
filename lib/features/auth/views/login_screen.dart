@@ -7,10 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/config/api_config.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/brand_mark.dart';
 import '../../../core/widgets/ds.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_ui.dart';
@@ -136,21 +136,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         ],
       ),
       children: [
-        Align(
+        const Align(
           alignment: Alignment.centerLeft,
-          child: Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.brand,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              LucideIcons.bookOpen,
-              color: Colors.white,
-              size: 26,
-            ),
-          ),
+          child: BrandMark(size: 52),
         ),
         const SizedBox(height: 14),
         Text(

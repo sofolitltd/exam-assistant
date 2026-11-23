@@ -363,9 +363,7 @@ final bcsPyqIndexProvider = FutureProvider.autoDispose<PyqIndex>((ref) async {
             nodeId,
             () => _TopicAcc(nodeId, paper.syllabusId!, q.question.subject),
           );
-      acc.count++;
-      acc.editions.add(paper.number);
-      acc.texts.add(q.question.questionText);
+      acc.items.add(PyqItem(paper.number, q.question));
     }
   }
 
@@ -381,10 +379,8 @@ final bcsPyqIndexProvider = FutureProvider.autoDispose<PyqIndex>((ref) async {
                       nodeId: t.nodeId,
                       syllabusId: t.syllabusId,
                       name: t.name,
-                      questions: t.count,
-                      editions: t.editions.toList()
-                        ..sort((a, b) => b.compareTo(a)),
-                      texts: t.texts,
+                      items: t.items
+                        ..sort((a, b) => b.edition.compareTo(a.edition)),
                     ),
                 ]..sort(
                   (a, b) => b.editions.length != a.editions.length
@@ -408,9 +404,7 @@ class _TopicAcc {
   final int nodeId;
   final int syllabusId;
   final String name;
-  int count = 0;
-  final Set<int> editions = {};
-  final List<String> texts = [];
+  final List<PyqItem> items = [];
 
   _TopicAcc(this.nodeId, this.syllabusId, this.name);
 }

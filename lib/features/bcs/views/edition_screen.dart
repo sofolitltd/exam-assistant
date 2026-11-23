@@ -449,7 +449,7 @@ class _CompletedEdition extends ConsumerWidget {
               InfoTile(
                 title: 'প্রশ্ন খোঁজো',
                 subtitle: 'শব্দ বা topic দিয়ে',
-                onTap: () => context.push('/bcs/pyq'),
+                onTap: () => context.push('/bcs/pyq?bcs=$n'),
               ),
             ],
           ),

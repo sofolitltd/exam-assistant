@@ -322,26 +322,48 @@ class BcsEditionList {
       all.where((e) => e.number == number).firstOrNull;
 }
 
-/// One syllabus topic in the subject-wise past questions: how many past
-/// questions it has and in which BCS editions they appeared.
+/// One past question with the BCS edition it appeared in.
+class PyqItem {
+  final int edition;
+  final QuestionModel question;
+
+  const PyqItem(this.edition, this.question);
+}
+
+/// One syllabus topic in the subject-wise past questions: its questions and
+/// the BCS editions they appeared in.
 class PyqTopic {
   final int nodeId;
   final int syllabusId;
   final String name;
-  final int questions;
-  final List<int> editions;
 
-  /// Question texts, for the search box.
-  final List<String> texts;
+  /// Newest edition first.
+  final List<PyqItem> items;
 
   const PyqTopic({
     required this.nodeId,
     required this.syllabusId,
     required this.name,
-    required this.questions,
-    required this.editions,
-    required this.texts,
+    required this.items,
   });
+
+  int get questions => items.length;
+
+  /// Distinct editions, newest first.
+  List<int> get editions =>
+      ({for (final i in items) i.edition}.toList()..sort((a, b) => b - a));
+
+  /// Only the questions from [editions]; null when none are left.
+  PyqTopic? only(Set<int> editions) {
+    final kept = items.where((i) => editions.contains(i.edition)).toList();
+    if (kept.isEmpty) return null;
+    return PyqTopic(
+      nodeId: nodeId,
+      syllabusId: syllabusId,
+      name: name,
+      items: kept,
+    );
+  }
 }
 
 /// A syllabus subject with its topics, most frequent first.
@@ -356,8 +378,24 @@ class PyqSubject {
 
 /// Subject-wise past questions across every published paper.
 class PyqIndex {
+  /// Every published edition, oldest first.
   final List<int> editions;
   final List<PyqSubject> subjects;
 
   const PyqIndex({required this.editions, required this.subjects});
+
+  /// The index limited to [selected] editions. An empty set means all.
+  /// [editions] stays the full list so the filter can still offer them.
+  PyqIndex only(Set<int> selected) {
+    if (selected.isEmpty) return this;
+    return PyqIndex(
+      editions: editions,
+      subjects: [
+        for (final s in subjects)
+          if (s.topics.map((t) => t.only(selected)).nonNulls.toList()
+              case final topics when topics.isNotEmpty)
+            PyqSubject(label: s.label, topics: topics),
+      ],
+    );
+  }
 }
