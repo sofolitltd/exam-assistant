@@ -6,6 +6,7 @@ import 'package:flutter_web_plugins/url_strategy.dart' show usePathUrlStrategy;
 import 'package:go_router/go_router.dart';
 
 import 'core/router/app_router.dart';
+import 'core/settings/app_settings.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/routine/controllers/routine_controller.dart';
@@ -64,6 +65,8 @@ class _ExamAssistantAppState extends ConsumerState<ExamAssistantApp> {
   }
 
   Future<void> _armRoutineReminders() async {
+    final prefs = await ReminderPrefs.load();
+    if (!prefs.anyOn) return;
     final notifications = ref.read(routineNotificationServiceProvider);
     final granted = await notifications.requestPermission();
     if (granted) {
@@ -78,6 +81,17 @@ class _ExamAssistantAppState extends ConsumerState<ExamAssistantApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: appRouter,
+      builder: (context, child) {
+        // The learner's text size multiplies the phone's own font setting.
+        final factor =
+            ref.watch(textSizeProvider).value?.factor ?? TextSize.medium.factor;
+        final media = MediaQuery.of(context);
+        final system = media.textScaler.scale(100) / 100;
+        return MediaQuery(
+          data: media.copyWith(textScaler: TextScaler.linear(system * factor)),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

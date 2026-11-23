@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/controllers/auth_controller.dart';
+import '../../goals/data/goals.dart';
 import '../data/models/study_plan_model.dart';
 
 /// The study plan for today. Recomputed on every open, so it follows the
@@ -12,8 +13,8 @@ final studyPlanProvider = FutureProvider.autoDispose<StudyPlan>((ref) async {
   return StudyPlan.fromJson(json);
 });
 
-/// Saves the target exam date (`null` clears it, which falls back to the
-/// next BCS) and refreshes the plan.
+/// Saves the primary goal's own date (`null` clears it, which falls back to
+/// the goal's BCS sitting, if any) and refreshes the plan and goals.
 Future<void> saveTargetExam(
   WidgetRef ref,
   DateTime? date, {
@@ -31,4 +32,5 @@ Future<void> saveTargetExam(
     'label': ?label,
   });
   ref.invalidate(studyPlanProvider);
+  ref.invalidate(goalsProvider);
 }

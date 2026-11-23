@@ -1,3 +1,4 @@
+import '../../learning/data/saved_questions.dart';
 import '../../../core/widgets/answer_caveat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -420,6 +421,7 @@ class _QuestionCard extends StatelessWidget {
               ),
               const Spacer(),
               QuestionSpeakButton(question: q),
+              SaveQuestionButton(questionId: q.id),
             ],
           ),
           Padding(

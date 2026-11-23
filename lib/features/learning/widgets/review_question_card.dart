@@ -7,6 +7,7 @@ import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/option_marker.dart';
 import '../../exam/data/models/question_model.dart';
 import '../../exam/widgets/question_playback_bar.dart';
+import '../data/saved_questions.dart';
 
 /// A question with its correct answer and explanation revealed. When
 /// [showSelection] is true it also marks what the learner picked: their
@@ -90,6 +91,7 @@ class ReviewQuestionCard extends StatelessWidget {
                 ),
               ),
               if (showSpeakButton) QuestionSpeakButton(question: question),
+              SaveQuestionButton(questionId: question.id),
             ],
           ),
           if (showSelection && selectedKey == null) ...[

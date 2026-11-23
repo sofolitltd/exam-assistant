@@ -20,7 +20,11 @@ import '../../features/auth/views/signup_screen.dart';
 import '../../features/auth/views/profile_setup_screen.dart';
 import '../../features/dashboard/views/leaderboard_view.dart';
 import '../../features/dashboard/views/main_navigation_hub.dart';
+import '../../features/dashboard/views/help_screen.dart';
+import '../../features/dashboard/views/notification_settings_screen.dart';
 import '../../features/dashboard/views/profile_view.dart';
+import '../../features/dashboard/views/results_history_screen.dart';
+import '../../features/learning/views/saved_questions_screen.dart';
 import '../../features/notices/views/notices_screen.dart';
 import '../../features/learning/views/exam_leaderboard_screen.dart';
 import '../../features/learning/views/listen_screen.dart';
@@ -179,6 +183,27 @@ final GoRouter appRouter = GoRouter(
                 child: const EditProfileScreen(),
               ),
             ),
+            GoRoute(
+              path: 'results',
+              pageBuilder: (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const ResultsHistoryScreen(),
+              ),
+            ),
+            GoRoute(
+              path: 'notifications',
+              pageBuilder: (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const NotificationSettingsScreen(),
+              ),
+            ),
+            GoRoute(
+              path: 'help',
+              pageBuilder: (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const HelpScreen(),
+              ),
+            ),
           ],
         ),
         GoRoute(
@@ -272,6 +297,10 @@ final GoRouter appRouter = GoRouter(
           title: query['title'],
         );
       },
+    ),
+    GoRoute(
+      path: '/saved',
+      builder: (context, state) => const SavedQuestionsScreen(),
     ),
     GoRoute(
       path: '/practice/review',

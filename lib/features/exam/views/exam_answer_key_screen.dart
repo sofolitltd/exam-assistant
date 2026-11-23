@@ -1,3 +1,4 @@
+import '../../learning/data/saved_questions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tex_text/tex_text.dart';
@@ -171,6 +172,7 @@ class _ExamAnswerKeyScreenState extends ConsumerState<ExamAnswerKeyScreen> {
                         ),
                       ),
                       QuestionSpeakButton(question: question),
+                      SaveQuestionButton(questionId: question.id),
                     ],
                   ),
                   if (question.options.isNotEmpty) ...[

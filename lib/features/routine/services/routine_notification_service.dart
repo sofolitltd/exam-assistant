@@ -2,6 +2,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../../core/settings/app_settings.dart';
+
 /// Schedules the routine feature's own local notifications: two daily
 /// check-in reminders and one weekly summary nudge. Deliberately kept to
 /// three notifications a day at most to avoid alert fatigue — no
@@ -56,32 +58,46 @@ class RoutineNotificationService {
   }
 
   /// Schedules (or re-schedules) the recurring check-in and weekly summary
-  /// notifications. Safe to call repeatedly — each call replaces the
-  /// previous schedule for that slot.
-  Future<void> scheduleRoutineReminders() async {
+  /// notifications the learner has switched on, and cancels the rest. Safe
+  /// to call repeatedly: each call replaces the previous schedule for that
+  /// slot.
+  Future<void> scheduleRoutineReminders({ReminderPrefs? prefs}) async {
     await init();
-    await _scheduleDaily(
-      id: _afternoonCheckInId,
-      hour: 14,
-      minute: 0,
-      title: 'আজকের অগ্রগতি জানাও',
-      body: 'সকাল থেকে এখন পর্যন্ত কোন কোন রুটিন ব্লক করতে পারলে?',
-    );
-    await _scheduleDaily(
-      id: _nightCheckInId,
-      hour: 22,
-      minute: 0,
-      title: 'দিনের শেষ check-in',
-      body: 'আজকের বাকি ব্লকগুলো মার্ক করে নাও।',
-    );
-    await _scheduleWeekly(
-      id: _weeklySummaryId,
-      weekday: DateTime.friday,
-      hour: 20,
-      minute: 0,
-      title: 'এই সপ্তাহের রুটিন সামারি তৈরি',
-      body: 'দেখো এই সপ্তাহে কতটুকু মানতে পারলে, আর কোথায় বেশি miss হয়েছে।',
-    );
+    final on = prefs ?? await ReminderPrefs.load();
+    if (on.afternoon) {
+      await _scheduleDaily(
+        id: _afternoonCheckInId,
+        hour: 14,
+        minute: 0,
+        title: 'আজকের অগ্রগতি জানাও',
+        body: 'সকাল থেকে এখন পর্যন্ত কোন কোন রুটিন ব্লক করতে পারলে?',
+      );
+    } else {
+      await _plugin.cancel(id: _afternoonCheckInId);
+    }
+    if (on.night) {
+      await _scheduleDaily(
+        id: _nightCheckInId,
+        hour: 22,
+        minute: 0,
+        title: 'দিনের শেষ check-in',
+        body: 'আজকের বাকি ব্লকগুলো মার্ক করে নাও।',
+      );
+    } else {
+      await _plugin.cancel(id: _nightCheckInId);
+    }
+    if (on.weekly) {
+      await _scheduleWeekly(
+        id: _weeklySummaryId,
+        weekday: DateTime.friday,
+        hour: 20,
+        minute: 0,
+        title: 'এই সপ্তাহের রুটিন সামারি তৈরি',
+        body: 'দেখো এই সপ্তাহে কতটুকু মানতে পারলে, আর কোথায় বেশি miss হয়েছে।',
+      );
+    } else {
+      await _plugin.cancel(id: _weeklySummaryId);
+    }
   }
 
   Future<void> cancelAll() async {

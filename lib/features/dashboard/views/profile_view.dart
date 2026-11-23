@@ -4,41 +4,40 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/settings/app_settings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/ds.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../auth/data/target_exam.dart';
-import '../../bcs/data/bcs_api.dart';
-import '../../bcs/data/bcs_models.dart';
-import '../../bcs/views/bcs_format.dart';
+import '../../goals/data/goals.dart';
+import '../../goals/views/goals_sheet.dart';
 import '../../learning/controllers/learning_providers.dart';
 import '../../learning/data/learning_models.dart';
 import '../../learning/widgets/accuracy_chart.dart';
 import '../../routine/controllers/routine_controller.dart';
+import '../../routine/controllers/study_plan_provider.dart';
 import '../controllers/stats_controller.dart';
 
 /// প্রোফাইল: who you are and your goal, four numbers, the recent trend,
-/// your three weakest subjects, then everything else.
+/// your weakest subjects, the study tools, then settings.
 class ProfileView extends ConsumerWidget {
   const ProfileView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userStatsProvider).value;
-    final results = [...?ref.watch(userExamResultsProvider).value]
+    final userAsync = ref.watch(userStatsProvider);
+    final user = userAsync.value;
+    final resultsAsync = ref.watch(userExamResultsProvider);
+    final results = [...?resultsAsync.value]
       ..sort((a, b) => a.answeredAt.compareTo(b.answeredAt));
     final streak = ref.watch(streakProvider).value;
     final subjectsAsync = ref.watch(subjectPerformanceByDaysProvider(30));
     final mistakes = ref.watch(mistakesProvider(null));
-    final target = BcsEdition(
-      number: ref.watch(bcsRunningNumberProvider),
-      status: EditionStatus.running,
-    );
-    final goalId = ref.watch(targetExamProvider).value;
-    final goalLabel = goalId == null || goalId == 'bcs'
-        ? '${editionName(target.number)} প্রিলিমিনারি'
-        : targetExamById(goalId).label;
+    final plan = ref.watch(studyPlanProvider).value;
+    final due = ref.watch(dueReviewsProvider).value;
+    final groups = ref.watch(studyGroupsProvider).value;
+    final textSize = ref.watch(textSizeProvider).value ?? TextSize.medium;
+    final reminders = ref.watch(reminderPrefsProvider).value;
 
     final pcts = [for (final r in results) r.percentage];
     final avg = pcts.isEmpty
@@ -49,18 +48,28 @@ class ProfileView extends ConsumerWidget {
 
     final subjects = [...?subjectsAsync.value?.where((s) => s.attempted > 0)]
       ..sort((a, b) => a.accuracy.compareTo(b.accuracy));
-    final weakest = subjects.take(3).toList();
+    // One or two answers say little: ask for a few before calling a subject
+    // weak.
+    final weakest = subjects.where((s) => s.attempted >= 5).take(3).toList();
 
     final name = user?.name.isNotEmpty == true ? user!.name : 'নাম নেই';
     final contact = user == null
         ? ''
         : user.phone.isNotEmpty
-        ? bn(user.phone)
+        ? '${bn(user.phone)} · ${user.email}'
         : user.email;
 
     final mistakesText = mistakes.items.isEmpty
         ? (mistakes.isLoading ? 'লোড হচ্ছে…' : 'কোনো ভুল নেই')
         : '${bn(mistakes.items.length)}${mistakes.hasMore ? '+' : ''}টি বাকি';
+
+    final enabledReminders = reminders == null
+        ? null
+        : [
+            reminders.afternoon,
+            reminders.night,
+            reminders.weekly,
+          ].where((e) => e).length;
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -87,13 +96,29 @@ class ProfileView extends ConsumerWidget {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
+                ref.invalidate(userProfileProvider);
                 ref.invalidate(userExamResultsProvider);
                 ref.invalidate(streakProvider);
+                ref.invalidate(studyPlanProvider);
+                ref.invalidate(goalsProvider);
+                ref.invalidate(dueReviewsProvider);
+                ref.invalidate(studyGroupsProvider);
                 ref.invalidate(subjectPerformanceByDaysProvider(30));
                 await ref.read(mistakesProvider(null).notifier).refresh();
               },
               child: DsPage(
                 children: [
+                  if (userAsync.hasError && user == null)
+                    DsCard(
+                      color: AppColors.dangerSoft,
+                      borderWidth: 0,
+                      padding: const EdgeInsets.all(14),
+                      onTap: () => ref.invalidate(userProfileProvider),
+                      child: Text(
+                        'প্রোফাইল লোড করা যায়নি। আবার চেষ্টা করতে এখানে চাপো।',
+                        style: dsText(14, color: AppColors.danger),
+                      ),
+                    ),
                   DsCard(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -133,6 +158,8 @@ class ProfileView extends ConsumerWidget {
                                   if (contact.isNotEmpty)
                                     Text(
                                       contact,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                       style: dsText(12, color: AppColors.muted),
                                     ),
                                 ],
@@ -145,50 +172,7 @@ class ProfileView extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 14),
-                        DsCard(
-                          color: AppColors.brandSoft,
-                          borderWidth: 0,
-                          radius: 12,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          onTap: () => _pickGoal(context, ref, goalId),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'আমার লক্ষ্য',
-                                      style: dsText(
-                                        12,
-                                        color: AppColors.brandInk2,
-                                      ),
-                                    ),
-                                    Text(
-                                      goalLabel,
-                                      style: dsText(
-                                        15,
-                                        weight: FontWeight.w600,
-                                        color: AppColors.brandStrong,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                'বদলাও',
-                                style: dsText(
-                                  13,
-                                  weight: FontWeight.w600,
-                                  color: AppColors.brandStrong,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        const GoalsCard(),
                         const SizedBox(height: 14),
                         Row(
                           children: [
@@ -207,11 +191,20 @@ class ProfileView extends ConsumerWidget {
                             _stat('${bn(streak?.current ?? 0)} দিন', 'streak'),
                           ],
                         ),
+                        if (streak != null) ...[
+                          const SizedBox(height: 10),
+                          Text(
+                            'সবচেয়ে লম্বা streak ${bn(streak.best)} দিন · '
+                            '${streak.todayCounted ? 'আজ গণনা হয়েছে' : 'আজ এখনো গণনা হয়নি'}',
+                            textAlign: TextAlign.center,
+                            style: dsText(12, color: AppColors.muted),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                   DsCard(
-                    onTap: () => context.push('/progress'),
+                    onTap: () => context.push('/profile/results'),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 14,
@@ -223,12 +216,14 @@ class ProfileView extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                'শেষ ${bn(last10.isEmpty ? 10 : last10.length)} পরীক্ষার ফল',
+                                last10.isEmpty
+                                    ? 'পরীক্ষার ফল'
+                                    : 'শেষ ${bn(last10.length)} পরীক্ষার ফল',
                                 style: dsText(15, weight: FontWeight.w600),
                               ),
                             ),
                             Text(
-                              'সব দেখো',
+                              'সব ফল',
                               style: dsText(
                                 13,
                                 weight: FontWeight.w600,
@@ -238,7 +233,19 @@ class ProfileView extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        AccuracyChart(values: last10, height: 96),
+                        if (last10.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            child: Text(
+                              resultsAsync.hasError
+                                  ? 'ফল লোড করা যায়নি'
+                                  : 'পরীক্ষা দিলে ফলের ধারা এখানে দেখা যাবে',
+                              textAlign: TextAlign.center,
+                              style: dsText(13, color: AppColors.muted),
+                            ),
+                          )
+                        else
+                          AccuracyChart(values: last10, height: 96),
                       ],
                     ),
                   ),
@@ -255,16 +262,69 @@ class ProfileView extends ConsumerWidget {
                       children: [for (final s in weakest) _WeakRow(subject: s)],
                     ),
                   ],
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: SectionLabel('পড়াশোনা'),
+                  ),
                   DsGrid(
                     children: [
                       InfoTile(
-                        title: 'আমার অগ্রগতি',
+                        title: 'আজকের পরিকল্পনা',
                         minHeight: 72,
-                        subtitle: subjects.isEmpty
-                            ? 'বিষয়ভিত্তিক হিসাব'
-                            : '${bn(subjects.length)} বিষয়ের হিসাব',
-                        onTap: () => context.push('/progress'),
+                        subtitle: plan?.daysLeft == null
+                            ? 'আজ কী পড়বে'
+                            : 'পরীক্ষা পর্যন্ত ${bn(plan!.daysLeft!)} দিন',
+                        onTap: () => context.push('/study-plan'),
                       ),
+                      InfoTile(
+                        title: 'আজকের রিভিশন',
+                        minHeight: 72,
+                        subtitle: due == null
+                            ? 'ভুলের রিভিশন'
+                            : due.summary.due == 0
+                            ? 'আজ কিছু বাকি নেই'
+                            : '${bn(due.summary.due)}টি বাকি',
+                        subtitleColor: (due?.summary.due ?? 0) > 0
+                            ? AppColors.accent
+                            : null,
+                        onTap: () => context.push('/practice/review'),
+                      ),
+                      InfoTile(
+                        title: 'কোনটা আগে পড়ব',
+                        minHeight: 72,
+                        subtitle: 'বিগত প্রশ্ন অনুযায়ী',
+                        onTap: () => context.push('/study-first'),
+                      ),
+                      InfoTile(
+                        title: 'স্কোর কৌশল',
+                        minHeight: 72,
+                        subtitle: 'নেগেটিভ মার্কিং',
+                        onTap: () => context.push('/strategy'),
+                      ),
+                      InfoTile(
+                        title: 'শুনে পড়ো',
+                        minHeight: 72,
+                        subtitle: 'প্রশ্ন-উত্তর শোনো',
+                        onTap: () => context.push('/listen'),
+                      ),
+                      InfoTile(
+                        title: 'স্টাডি গ্রুপ',
+                        minHeight: 72,
+                        subtitle: groups == null
+                            ? 'বন্ধুদের সাথে'
+                            : groups.isEmpty
+                            ? 'কোনো গ্রুপে নেই'
+                            : '${bn(groups.length)}টি গ্রুপে আছো',
+                        onTap: () => context.push('/routine/groups'),
+                      ),
+                    ],
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: SectionLabel('আমার রেকর্ড'),
+                  ),
+                  DsGrid(
+                    children: [
                       InfoTile(
                         title: 'সব ভুল',
                         minHeight: 72,
@@ -277,62 +337,66 @@ class ProfileView extends ConsumerWidget {
                       InfoTile(
                         title: 'সংরক্ষিত',
                         minHeight: 72,
-                        subtitle: 'শীঘ্রই আসছে',
-                        onTap: () => showComingSoon(context, 'সংরক্ষিত প্রশ্ন'),
+                        subtitle: 'বুকমার্ক করা প্রশ্ন',
+                        onTap: () => context.push('/saved'),
                       ),
                       InfoTile(
-                        title: 'শুনে পড়ো',
+                        title: 'আমার অগ্রগতি',
                         minHeight: 72,
-                        subtitle: 'প্রশ্ন-উত্তর শোনো',
-                        onTap: () => context.push('/listen'),
+                        subtitle: subjects.isEmpty
+                            ? 'বিষয়ভিত্তিক হিসাব'
+                            : '${bn(subjects.length)} বিষয়ের হিসাব',
+                        onTap: () => context.push('/progress'),
+                      ),
+                      InfoTile(
+                        title: 'আমার ফল',
+                        minHeight: 72,
+                        subtitle: results.isEmpty
+                            ? 'পরীক্ষার ইতিহাস'
+                            : '${bn(results.length)}টি পরীক্ষা',
+                        onTap: () => context.push('/profile/results'),
+                      ),
+                      InfoTile(
+                        title: 'সাপ্তাহিক সামারি',
+                        minHeight: 72,
+                        subtitle: 'রুটিন কতটা মানলে',
+                        onTap: () => context.push('/routine/weekly-summary'),
+                      ),
+                      InfoTile(
+                        title: 'লিডারবোর্ড',
+                        minHeight: 72,
+                        subtitle: 'সেরা ২০ জন',
+                        onTap: () => context.push('/leaderboard'),
                       ),
                     ],
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: SectionLabel('সেটিংস'),
                   ),
                   DsListCard(
                     radius: 16,
                     children: [
                       _setting(
                         'নোটিফিকেশন ও রিমাইন্ডার',
-                        onTap: () async {
-                          final service = ref.read(
-                            routineNotificationServiceProvider,
-                          );
-                          final granted = await service.requestPermission();
-                          if (granted) await service.scheduleRoutineReminders();
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                granted
-                                    ? 'রুটিনের রিমাইন্ডার চালু আছে'
-                                    : 'ফোনের সেটিংস থেকে নোটিফিকেশন চালু করো',
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      _setting(
-                        'ডার্ক মোড',
-                        trailing: 'শীঘ্রই',
-                        onTap: () => showComingSoon(context, 'ডার্ক মোড'),
+                        trailing: enabledReminders == null
+                            ? null
+                            : enabledReminders == 0
+                            ? 'বন্ধ'
+                            : '${bn(enabledReminders)}টি চালু',
+                        onTap: () => context.push('/profile/notifications'),
                       ),
                       _setting(
                         'লেখার আকার',
-                        trailing: 'মাঝারি',
-                        onTap: () =>
-                            showComingSoon(context, 'লেখার আকার বদলানো'),
+                        trailing: textSize.label,
+                        onTap: () => _pickTextSize(context, ref, textSize),
                       ),
                       _setting(
                         'সাহায্য ও মতামত',
-                        onTap: () => showComingSoon(context, 'সাহায্য ও মতামত'),
+                        onTap: () => context.push('/profile/help'),
                       ),
                       InkWell(
-                        onTap: () async {
-                          await ref
-                              .read(authControllerProvider.notifier)
-                              .signOut();
-                          appRouter.go('/login');
-                        },
+                        onTap: () => _confirmSignOut(context, ref),
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(
@@ -377,14 +441,15 @@ class ProfileView extends ConsumerWidget {
         child: Row(
           children: [
             Expanded(child: Text(title, style: dsText(15))),
-            if (trailing != null)
-              Text(trailing, style: dsText(13, color: AppColors.muted))
-            else
-              const Icon(
-                LucideIcons.chevronRight,
-                size: 16,
-                color: Color(0xFF8A919C),
-              ),
+            if (trailing != null) ...[
+              Text(trailing, style: dsText(13, color: AppColors.muted)),
+              const SizedBox(width: 6),
+            ],
+            const Icon(
+              LucideIcons.chevronRight,
+              size: 16,
+              color: Color(0xFF8A919C),
+            ),
           ],
         ),
       ),
@@ -436,14 +501,25 @@ String practicePath(SubjectPerformance s) =>
     '/taxonomy-questions/${s.syllabusId}/${s.nodeId}'
     '?title=${Uri.encodeComponent(s.name)}';
 
-/// "বদলাও" on the goal card. The choice is stored on this device until the
-/// API has a target-exam field.
-Future<void> _pickGoal(
+Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+  final ok = await showConfirmDialog(
+    context,
+    title: 'লগ আউট করবে?',
+    message: 'আবার ঢুকতে ইমেইল আর পাসওয়ার্ড লাগবে।',
+    confirmLabel: 'লগ আউট',
+    destructive: true,
+  );
+  if (!ok) return;
+  await ref.read(authControllerProvider.notifier).signOut();
+  appRouter.go('/login');
+}
+
+Future<void> _pickTextSize(
   BuildContext context,
   WidgetRef ref,
-  String? current,
+  TextSize current,
 ) async {
-  final picked = await showModalBottomSheet<String>(
+  final picked = await showModalBottomSheet<TextSize>(
     context: context,
     showDragHandle: true,
     backgroundColor: AppColors.paper,
@@ -454,38 +530,36 @@ Future<void> _pickGoal(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('আমার লক্ষ্য', style: dsText(18, weight: FontWeight.w700)),
+            Text('লেখার আকার', style: dsText(18, weight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text(
-              'হোমের "আজ" card এটা দেখেই সাজানো হয়',
+              'প্রশ্ন, উত্তর আর পুরো অ্যাপের লেখা এই মাপে দেখাবে',
               style: dsText(13, color: AppColors.muted),
             ),
             const SizedBox(height: 12),
-            for (final o in targetExamOptions)
+            for (final o in TextSize.values)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: DsCard(
-                  color: o.id == (current ?? 'bcs')
-                      ? AppColors.brandSoft
-                      : AppColors.paper,
-                  borderColor: o.id == (current ?? 'bcs')
+                  color: o == current ? AppColors.brandSoft : AppColors.paper,
+                  borderColor: o == current
                       ? AppColors.brand
                       : AppColors.lineStrong,
                   radius: 12,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
-                    vertical: 14,
+                    vertical: 12,
                   ),
-                  onTap: () => Navigator.of(context).pop(o.id),
+                  onTap: () => Navigator.of(context).pop(o),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
                           o.label,
-                          style: dsText(15, weight: FontWeight.w600),
+                          style: dsText(15 * o.factor, weight: FontWeight.w600),
                         ),
                       ),
-                      if (o.id == (current ?? 'bcs'))
+                      if (o == current)
                         const Icon(
                           LucideIcons.check,
                           size: 18,
@@ -501,6 +575,6 @@ Future<void> _pickGoal(
     ),
   );
   if (picked != null) {
-    await ref.read(targetExamProvider.notifier).set(picked);
+    await ref.read(textSizeProvider.notifier).set(picked);
   }
 }

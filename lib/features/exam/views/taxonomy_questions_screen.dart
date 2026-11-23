@@ -1,3 +1,4 @@
+import '../../learning/data/saved_questions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -167,6 +168,7 @@ class _TaxonomyQuestionsScreenState
                           ),
                         ),
                         QuestionSpeakButton(question: question),
+                        SaveQuestionButton(questionId: question.id),
                       ],
                     ),
                     const SizedBox(height: 12),

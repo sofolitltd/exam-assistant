@@ -9,7 +9,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ds.dart';
 import '../controllers/auth_controller.dart';
-import '../data/target_exam.dart';
 import '../widgets/auth_ui.dart';
 import 'login_screen.dart';
 
@@ -34,7 +33,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
   final _passwordFocus = FocusNode();
   bool _obscure = true;
   bool _agree = true;
-  final String _goal = targetExamOptions.first.id;
   String? _error;
 
   @override
@@ -66,8 +64,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
     setState(() => _error = null);
     if (!_formKey.currentState!.validate()) return;
     TextInput.finishAutofillContext();
-    // Kept on the device; not awaited so a slow store can't block sign up.
-    unawaited(ref.read(targetExamProvider.notifier).set(_goal));
     try {
       await ref
           .read(authControllerProvider.notifier)

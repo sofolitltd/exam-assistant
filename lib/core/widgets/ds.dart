@@ -856,3 +856,51 @@ void showComingSoon(BuildContext context, [String what = 'এই অংশ']) {
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text('$what শীঘ্রই আসছে')));
 }
+
+/// Asks before something that is hard to undo. Returns true only when the
+/// learner taps the confirm button; a tap outside or "থাক" returns false.
+Future<bool> showConfirmDialog(
+  BuildContext context, {
+  required String title,
+  String? message,
+  required String confirmLabel,
+  String cancelLabel = 'থাক',
+  bool destructive = false,
+}) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: AppColors.paper,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(title, style: dsText(18, weight: FontWeight.w700)),
+      content: message == null
+          ? null
+          : Text(
+              message,
+              style: dsText(14, color: AppColors.ink2, height: 1.5),
+            ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(
+            cancelLabel,
+            style: dsText(15, weight: FontWeight.w600, color: AppColors.muted),
+          ),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(
+            confirmLabel,
+            style: dsText(
+              15,
+              weight: FontWeight.w700,
+              color: destructive ? AppColors.danger : AppColors.brand,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
+}

@@ -7,8 +7,7 @@ import '../data/services/taxonomy_api_service.dart';
 /// screen reuses the same cache instead of each constructing its own
 /// service and refetching from the network.
 final taxonomyApiServiceProvider = Provider<TaxonomyApiService>(
-  (ref) =>
-      TaxonomyApiService(accountApi: ref.watch(accountApiServiceProvider)),
+  (ref) => TaxonomyApiService(accountApi: ref.watch(accountApiServiceProvider)),
 );
 
 /// The exam programs list. Not `autoDispose`: this is reference data that

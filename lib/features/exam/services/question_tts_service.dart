@@ -100,7 +100,9 @@ class QuestionTtsService {
           return;
         }
       } catch (e) {
-        debugPrint('QuestionTtsService: isLanguageAvailable($locale) failed: $e');
+        debugPrint(
+          'QuestionTtsService: isLanguageAvailable($locale) failed: $e',
+        );
       }
     }
 

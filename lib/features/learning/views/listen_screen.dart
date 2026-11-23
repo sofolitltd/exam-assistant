@@ -48,13 +48,14 @@ class _ListenScreenState extends ConsumerState<ListenScreen> {
 
   Future<_ListenSet> _load() async {
     if (widget.isSubjectSource) {
-      final page = await TaxonomyApiService(
-        accountApi: ref.read(accountApiServiceProvider),
-      ).getQuestionBank(
-        syllabusId: widget.syllabusId,
-        nodeId: widget.nodeId,
-        limit: _maxListenSetSize,
-      );
+      final page =
+          await TaxonomyApiService(
+            accountApi: ref.read(accountApiServiceProvider),
+          ).getQuestionBank(
+            syllabusId: widget.syllabusId,
+            nodeId: widget.nodeId,
+            limit: _maxListenSetSize,
+          );
       return _ListenSet(page.items, const {});
     }
     final mistakes = await ref

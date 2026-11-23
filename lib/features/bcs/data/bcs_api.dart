@@ -418,7 +418,9 @@ final bcsSyllabusCompareProvider = FutureProvider<List<SyllabusSubject>>((
     );
   final draft = drafts.firstOrNull;
 
-  final oldNodes = await ref.watch(syllabusNodesProvider(current.syllabusId).future);
+  final oldNodes = await ref.watch(
+    syllabusNodesProvider(current.syllabusId).future,
+  );
   final newNodes = draft == null
       ? oldNodes
       : await ref.watch(syllabusNodesProvider(draft.syllabusId).future);

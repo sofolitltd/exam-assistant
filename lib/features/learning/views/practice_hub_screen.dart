@@ -9,6 +9,7 @@ import '../../../core/widgets/ds.dart';
 import '../../bcs/data/bcs_api.dart';
 import '../../bcs/views/bcs_format.dart';
 import '../../exam/views/home_screen.dart';
+import '../../goals/views/goal_chip.dart';
 import '../controllers/learning_providers.dart';
 
 /// অনুশীলন tab: one main task (mistakes to clear) and every practice tool.
@@ -58,6 +59,7 @@ class PracticeHubScreen extends ConsumerWidget {
               child: DsPage(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                 children: [
+                  const GoalChip(),
                   const SectionLabel('আগে এটা'),
                   DsCard(
                     onTap: () => context.push('/practice/review'),

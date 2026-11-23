@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/ds.dart';
 import '../../bcs/views/bcs_format.dart';
+import '../../goals/data/goals.dart';
 import '../controllers/study_plan_provider.dart';
 import '../data/models/study_plan_model.dart';
 
@@ -44,6 +45,7 @@ class StudyPlanScreen extends ConsumerWidget {
     };
     final target = plan.targetDate;
     final targetName =
+        plan.goal?.title ??
         plan.targetLabel ??
         (plan.targetEdition != null
             ? editionName(plan.targetEdition!)
@@ -53,8 +55,49 @@ class StudyPlanScreen extends ConsumerWidget {
       'query' => 'তোমার বেছে নেওয়া সময়',
       _ => 'ধরে নেওয়া সময়। রুটিনে পড়ার ব্লক দিলে সেটা ধরবে',
     };
+    final sprint = plan.goalById(plan.sprintGoalId);
+    final suggested = plan.goalById(plan.suggestPrimaryGoalId);
+    final mixText = sprint != null || plan.goalMix.length < 2
+        ? null
+        : [
+            for (final m in plan.goalMix)
+              if (plan.goalById(m.goalId) case final g?)
+                '${g.shortTitle} ${bn((m.share * 100).round())}%',
+          ].join(' · ');
+    final basisNote = _basisNote(plan);
     return DsPage(
       children: [
+        if (sprint != null)
+          DsCard(
+            color: AppColors.dangerSoft,
+            borderWidth: 0,
+            child: Text(
+              'শেষ সপ্তাহ: ${sprint.title}-এর আর ${bn(sprint.daysLeft ?? 0)} '
+              'দিন। আজকের পুরো সময় এই পরীক্ষার বিষয়ে, বেশিরভাগ বিগত প্রশ্ন আর '
+              'মডেল টেস্টে।',
+              style: dsText(14, height: 1.5, color: AppColors.danger),
+            ),
+          ),
+        if (suggested != null)
+          DsCard(
+            color: AppColors.brandSoft,
+            borderWidth: 0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '${suggested.title}-এর আর ${bn(suggested.daysLeft ?? 0)} '
+                  'দিন বাকি। এটাকে প্রধান লক্ষ্য করবে?',
+                  style: dsText(14, height: 1.5, color: AppColors.brandStrong),
+                ),
+                const SizedBox(height: 10),
+                DsButton(
+                  label: 'প্রধান করো',
+                  onPressed: () => _makePrimary(context, ref, suggested.id),
+                ),
+              ],
+            ),
+          ),
         DsCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -120,10 +163,30 @@ class StudyPlanScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+              if (mixText != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'লক্ষ্য ধরে ভাগ: $mixText',
+                  style: dsText(12, color: AppColors.muted),
+                ),
+                Text(
+                  'যেটার পরীক্ষা কাছে সেটা বেশি সময় পায়। বাংলা, ইংরেজি, গণিত '
+                  'আর সাধারণ জ্ঞান সব লক্ষ্যেই কাজে লাগে।',
+                  style: dsText(12, height: 1.4, color: AppColors.muted),
+                ),
+              ],
             ],
           ),
         ),
         const SectionLabel('কোন বিষয়ে কত সময়'),
+        if (basisNote != null && plan.subjects.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              basisNote,
+              style: dsText(13, height: 1.5, color: AppColors.muted),
+            ),
+          ),
         if (plan.subjects.isEmpty)
           Text(
             'বিগত প্রশ্নের হিসাব এলে এখানে বিষয় ধরে সময় ভাগ হবে।',
@@ -214,6 +277,44 @@ class StudyPlanScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// How the non-BCS goals in today's mix were split by subject.
+  String? _basisNote(StudyPlan plan) {
+    final byMarks = <String>[];
+    final byPapers = <String>[];
+    for (final m in plan.goalMix) {
+      final g = plan.goalById(m.goalId);
+      if (g == null || g.isBcs || m.share <= 0) continue;
+      (m.weightsFrom == 'marks' ? byMarks : byPapers).add(g.programLabel);
+    }
+    if (plan.goalMix.isEmpty && plan.goal != null && !plan.goal!.isBcs) {
+      byPapers.add(plan.goal!.programLabel);
+    }
+    final parts = [
+      if (byMarks.isNotEmpty)
+        '${byMarks.join(', ')}: পরীক্ষার নম্বর বণ্টন ধরে বিষয় ভাগ করা হয়েছে।',
+      if (byPapers.isNotEmpty)
+        '${byPapers.join(', ')}: বিগত প্রশ্ন এখনো যোগ হয়নি, তাই বিসিএসের '
+            'বিগত প্রশ্ন ধরে ভাগ করা হয়েছে।',
+    ];
+    return parts.isEmpty ? null : parts.join(' ');
+  }
+
+  Future<void> _makePrimary(
+    BuildContext context,
+    WidgetRef ref,
+    int goalId,
+  ) async {
+    try {
+      await ref.read(goalsProvider.notifier).makePrimary(goalId);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('বদলানো যায়নি, আবার চেষ্টা করো')),
+        );
+      }
+    }
   }
 
   Future<void> _pickDate(BuildContext context, WidgetRef ref) async {

@@ -12,6 +12,7 @@ import '../../bcs/data/bcs_api.dart';
 import '../../bcs/views/bcs_async.dart';
 import '../../bcs/views/bcs_format.dart';
 import '../../notices/views/notices_screen.dart';
+import '../../goals/views/goal_chip.dart';
 import '../data/home_categories.dart';
 
 /// Hidden for now (user's choice, 2026-11-21): the "আজ" card runs on
@@ -49,6 +50,7 @@ class HomeScreen extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                 children: [
+                  const GoalChip(),
                   if (showTodaySection) ...[
                     const SectionLabel('আজ'),
                     const SizedBox(height: 8),

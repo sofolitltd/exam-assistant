@@ -1,3 +1,5 @@
+import '../../../goals/data/goals.dart';
+
 /// A study plan computed by the server from the countdown to the target
 /// exam, the learner's own study time, what past papers ask and where the
 /// learner is weak.
@@ -52,14 +54,53 @@ class PlanSubject {
   );
 }
 
+/// One goal's share of today's study time.
+class GoalMix {
+  final int goalId;
+  final double share;
+
+  /// marks (the exam's mark split) or papers (BCS question frequency).
+  final String weightsFrom;
+
+  const GoalMix({
+    required this.goalId,
+    required this.share,
+    required this.weightsFrom,
+  });
+}
+
 class StudyPlan {
   final DateTime? targetDate;
   final String? targetLabel;
 
-  /// `user` (chosen), `default` (the next BCS from the editions list) or
-  /// `none`.
+  /// `user` (chosen), `edition` (the chosen BCS sitting), `default` (the
+  /// next BCS from the editions list) or `none`.
   final String targetSource;
   final int? targetEdition;
+
+  /// The primary goal the plan counts down to (null: no goal yet).
+  final UserGoal? goal;
+
+  /// All the learner's goals, primary first.
+  final List<UserGoal> goals;
+
+  /// Each goal's share of today's time (0 to 1).
+  final List<GoalMix> goalMix;
+
+  /// The goal a week or less away, which gets the whole day.
+  final int? sprintGoalId;
+
+  /// A close goal, sooner than the primary one, worth making primary.
+  final int? suggestPrimaryGoalId;
+
+  UserGoal? goalById(int? id) {
+    if (id == null) return null;
+    for (final g in goals) {
+      if (g.id == id) return g;
+    }
+    return null;
+  }
+
   final int? daysLeft;
 
   /// foundation, revision or final.
@@ -77,6 +118,11 @@ class StudyPlan {
     required this.targetLabel,
     required this.targetSource,
     required this.targetEdition,
+    this.goal,
+    this.goals = const [],
+    this.goalMix = const [],
+    this.sprintGoalId,
+    this.suggestPrimaryGoalId,
     required this.daysLeft,
     required this.phase,
     required this.minutesPerDay,
@@ -93,6 +139,24 @@ class StudyPlan {
       targetLabel: map['targetLabel'] as String?,
       targetSource: map['targetSource'] as String? ?? 'none',
       targetEdition: (map['targetEdition'] as num?)?.toInt(),
+      goal: map['goal'] is Map
+          ? UserGoal.fromJson(Map<String, dynamic>.from(map['goal'] as Map))
+          : null,
+      goals: [
+        for (final g in (map['goals'] as List? ?? const []))
+          if (g is Map) UserGoal.fromJson(Map<String, dynamic>.from(g)),
+      ],
+      goalMix: [
+        for (final m in (map['goalMix'] as List? ?? const []))
+          if (m is Map)
+            GoalMix(
+              goalId: (m['goalId'] as num).toInt(),
+              share: (m['share'] as num?)?.toDouble() ?? 0,
+              weightsFrom: m['weightsFrom'] as String? ?? 'papers',
+            ),
+      ],
+      sprintGoalId: (map['sprintGoalId'] as num?)?.toInt(),
+      suggestPrimaryGoalId: (map['suggestPrimaryGoalId'] as num?)?.toInt(),
       daysLeft: (map['daysLeft'] as num?)?.toInt(),
       phase: map['phase'] as String? ?? 'foundation',
       minutesPerDay: (map['minutesPerDay'] as num).toInt(),
