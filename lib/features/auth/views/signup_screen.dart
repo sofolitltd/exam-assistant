@@ -34,7 +34,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
   final _passwordFocus = FocusNode();
   bool _obscure = true;
   bool _agree = true;
-  String _goal = targetExamOptions.first.id;
+  final String _goal = targetExamOptions.first.id;
   String? _error;
 
   @override
@@ -65,13 +65,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
   Future<void> _submit() async {
     setState(() => _error = null);
     if (!_formKey.currentState!.validate()) return;
-    if (!_agree) {
-      setState(
-        () => _error =
-            'শর্তাবলি ও গোপনীয়তা নীতি মেনে নিলে তবেই অ্যাকাউন্ট খোলা যাবে।',
-      );
-      return;
-    }
     TextInput.finishAutofillContext();
     // Kept on the device; not awaited so a slow store can't block sign up.
     unawaited(ref.read(targetExamProvider.notifier).set(_goal));
@@ -162,7 +155,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                   keyboardType: TextInputType.phone,
                   action: TextInputAction.next,
                   autofillHints: const [AutofillHints.telephoneNumberNational],
-                  prefix: const _CountryCode(),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
                       return 'মোবাইল নম্বর লেখো';
@@ -206,23 +198,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                 const SizedBox(height: 20),
                 const Divider(height: 1, color: AppColors.lineStrong),
                 const SizedBox(height: 14),
-                Text(
-                  'কোন পরীক্ষার প্রস্তুতি নিচ্ছ?',
-                  style: dsText(14, weight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                DsGrid(
-                  gap: 8,
-                  children: [
-                    for (final o in targetExamOptions)
-                      _GoalButton(
-                        label: o.label,
-                        selected: _goal == o.id,
-                        onTap: () => setState(() => _goal = o.id),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 10),
                 _AgreeRow(
                   value: _agree,
                   onChanged: (v) => setState(() => _agree = v),
@@ -231,6 +206,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                 AuthSubmitButton(
                   label: 'অ্যাকাউন্ট খোলো',
                   busy: busy,
+                  enabled: _agree,
                   onPressed: _submit,
                 ),
               ],
@@ -238,25 +214,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
           ),
         ),
       ],
-    );
-  }
-}
-
-class _CountryCode extends StatelessWidget {
-  const _CountryCode();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(right: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFAFAF8),
-        border: Border(right: BorderSide(color: AppColors.line)),
-        borderRadius: BorderRadius.horizontal(left: Radius.circular(11)),
-      ),
-      alignment: Alignment.center,
-      child: Text('+৮৮', style: dsText(15, color: AppColors.ink2)),
     );
   }
 }
@@ -280,56 +237,6 @@ class _Divider extends StatelessWidget {
         ),
         const Expanded(child: Divider(color: AppColors.lineStrong)),
       ],
-    );
-  }
-}
-
-class _GoalButton extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _GoalButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      selected: selected,
-      button: true,
-      child: Material(
-        color: selected ? AppColors.brandSoft : AppColors.paper,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: selected
-              ? const BorderSide(color: AppColors.brand, width: 1.5)
-              : const BorderSide(color: AppColors.lineStrong),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  label,
-                  style: dsText(
-                    14,
-                    weight: FontWeight.w600,
-                    color: selected ? AppColors.brandStrong : AppColors.ink,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

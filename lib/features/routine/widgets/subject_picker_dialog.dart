@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../auth/controllers/auth_controller.dart';
+import '../../exam/controllers/taxonomy_providers.dart';
 import '../../exam/data/services/taxonomy_api_service.dart';
 
 /// The picked subject; [none] means "unlink this block from any subject".
@@ -27,21 +27,22 @@ class SubjectPickerDialog extends ConsumerStatefulWidget {
 }
 
 class _SubjectPickerDialogState extends ConsumerState<SubjectPickerDialog> {
-  late final TaxonomyApiService _api = TaxonomyApiService(
-    accountApi: ref.read(accountApiServiceProvider),
+  late final Future<List<ExamProgram>> _programs = ref.read(
+    taxonomyProgramsProvider.future,
   );
-  late final Future<List<ExamProgram>> _programs = _api.getPrograms();
   ExamProgram? _program;
   Future<List<SyllabusNode>>? _subjects;
 
   Future<List<SyllabusNode>> _loadSubjects(ExamProgram program) async {
-    final syllabi = await _api.getSyllabi(program.programId);
+    final syllabi = await ref.read(syllabiProvider(program.programId).future);
     if (syllabi.isEmpty) return const [];
     final syllabus = syllabi.firstWhere(
       (s) => s.status == 'current',
       orElse: () => syllabi.first,
     );
-    final nodes = await _api.getNodes(syllabus.syllabusId);
+    final nodes = await ref.read(
+      syllabusNodesProvider(syllabus.syllabusId).future,
+    );
     return nodes.where((n) => n.nodeType == 'subject' && n.active).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
   }

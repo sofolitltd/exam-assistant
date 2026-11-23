@@ -1,6 +1,7 @@
 import '../../../../core/models/paginated_list.dart';
 import '../../../auth/data/services/account_api_service.dart';
 import '../models/exam_model.dart';
+import '../models/exam_stats_model.dart';
 import '../models/question_model.dart';
 
 class ExamApiService {
@@ -54,6 +55,15 @@ class ExamApiService {
       '/v1/exams/${Uri.encodeComponent(examId)}/answer-key',
     );
     return _questions(response);
+  }
+
+  /// Everyone's average score and the hardest questions, once the exam's
+  /// scheduled sitting window has closed.
+  Future<ExamStats> getExamStats(String examId) async {
+    final response = await _accountApi.getApiJson(
+      '/v1/exams/${Uri.encodeComponent(examId)}/stats',
+    );
+    return ExamStats.fromMap(Map<String, dynamic>.from(response as Map));
   }
 
   Future<int> getExamQuestionCount(String examId) async {

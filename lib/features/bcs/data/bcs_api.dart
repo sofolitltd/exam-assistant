@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/controllers/auth_controller.dart';
+import '../../exam/controllers/taxonomy_providers.dart';
 import '../../exam/data/models/exam_model.dart';
 import '../../exam/data/models/exam_result_model.dart';
 import '../../exam/data/services/exam_api_service.dart';
@@ -17,16 +18,12 @@ import 'bcs_sample_data.dart';
 /// has no sitting window, so the key is always open), and each question's
 /// subject and part come from walking the syllabus tree up from its topic.
 ///
-/// The live-exam schedule, merit lists for live exams, syllabus comparison
-/// and paper analysis are still sample data in [BcsRepository]: the API has
-/// no concept of them yet.
+/// The live-exam schedule, merit lists for live exams and syllabus
+/// comparison are still sample data in [BcsRepository]: the API has no
+/// concept of them yet.
 
 final _examApiProvider = Provider<ExamApiService>(
   (ref) => ExamApiService(accountApi: ref.watch(accountApiServiceProvider)),
-);
-
-final _taxonomyApiProvider = Provider<TaxonomyApiService>(
-  (ref) => TaxonomyApiService(accountApi: ref.watch(accountApiServiceProvider)),
 );
 
 /// Published past BCS papers, newest edition first.
@@ -142,12 +139,12 @@ final bcsListProvider = FutureProvider.autoDispose<BcsEditionList>((ref) async {
 });
 
 /// Past editions, newest first, with the user's own progress.
-final bcsPastEditionsProvider = FutureProvider.autoDispose<List<BcsEdition>>(
+final bcsPastEditionsProvider = FutureProvider<List<BcsEdition>>(
   (ref) async => (await ref.watch(bcsListProvider.future)).past,
 );
 
 /// Past editions whose paper can be opened.
-final bcsPapersReadyProvider = FutureProvider.autoDispose<List<BcsEdition>>(
+final bcsPapersReadyProvider = FutureProvider<List<BcsEdition>>(
   (ref) async => [
     for (final e in await ref.watch(bcsPastEditionsProvider.future))
       if (e.hasPaper) e,
@@ -212,28 +209,16 @@ class BcsPaperMissing implements Exception {
 }
 
 /// A whole paper with its questions grouped by syllabus subject and part.
-final bcsPaperProvider = FutureProvider.autoDispose.family<BcsPaper, int>((
+final bcsPaperProvider = FutureProvider.family<BcsPaper, int>((
   ref,
   number,
 ) async {
   final exams = await ref.watch(bcsPaperExamsProvider.future);
   final exam = exams.where((e) => e.editionNumber == number).firstOrNull;
   if (exam == null) {
-    // The running edition has no API paper yet; keep its sample questions.
-    final sample = ref.read(bcsRepositoryProvider);
-    if (number == sample.runningEdition().number) {
-      final questions = sample.paperQuestions(number);
-      return BcsPaper(
-        number: number,
-        examId: null,
-        durationSeconds: 2 * 60 * 60,
-        negativeMarks: 0.5,
-        questions: questions,
-        subjects: [
-          PaperSubject(id: 'all', label: 'সব', count: questions.length),
-        ],
-      );
-    }
+    // No published paper yet for this edition (including the running one,
+    // until the admin console publishes its exam) — honest "not out yet"
+    // rather than a fake stand-in paper.
     throw BcsPaperMissing(number);
   }
 
@@ -244,8 +229,9 @@ final bcsPaperProvider = FutureProvider.autoDispose.family<BcsPaper, int>((
   final nodes = <int, SyllabusNode>{};
   if (exam.syllabusId != null) {
     try {
-      for (final n
-          in await ref.read(_taxonomyApiProvider).getNodes(exam.syllabusId!)) {
+      for (final n in await ref.watch(
+        syllabusNodesProvider(exam.syllabusId!).future,
+      )) {
         nodes[n.nodeId] = n;
       }
     } catch (_) {
@@ -340,7 +326,7 @@ final bcsMistakeIdsProvider = FutureProvider.autoDispose
 /// Subject-wise past questions: every published paper's questions grouped
 /// by syllabus subject, then by topic. A topic's editions are the papers it
 /// appeared in; topics that appeared in more papers come first.
-final bcsPyqIndexProvider = FutureProvider.autoDispose<PyqIndex>((ref) async {
+final bcsPyqIndexProvider = FutureProvider<PyqIndex>((ref) async {
   final ready = await ref.watch(bcsPapersReadyProvider.future);
   final papers = await Future.wait([
     for (final e in ready) ref.watch(bcsPaperProvider(e.number).future),
@@ -408,3 +394,125 @@ class _TopicAcc {
 
   _TopicAcc(this.nodeId, this.syllabusId, this.name);
 }
+
+/// The marks each subject carried under the syllabus BCS papers were
+/// actually set on ("current" in `syllabus_versions`) and under the newest
+/// officially-reported update ("draft"), for the সিলেবাস compare screen.
+/// Falls back to just the current syllabus (no change) when no update has
+/// been reported yet.
+final bcsSyllabusCompareProvider = FutureProvider<List<SyllabusSubject>>((
+  ref,
+) async {
+  final programs = await ref.watch(taxonomyProgramsProvider.future);
+  final program = programs.where((p) => p.code == 'BCS').firstOrNull;
+  if (program == null) return const [];
+
+  final versions = await ref.watch(syllabiProvider(program.programId).future);
+  final current = versions.where((v) => v.status == 'current').firstOrNull;
+  if (current == null) return const [];
+  final drafts = versions.where((v) => v.status == 'draft').toList()
+    ..sort(
+      (a, b) => (b.effectiveFrom ?? DateTime(0)).compareTo(
+        a.effectiveFrom ?? DateTime(0),
+      ),
+    );
+  final draft = drafts.firstOrNull;
+
+  final oldNodes = await ref.watch(syllabusNodesProvider(current.syllabusId).future);
+  final newNodes = draft == null
+      ? oldNodes
+      : await ref.watch(syllabusNodesProvider(draft.syllabusId).future);
+
+  final oldSubjects = {
+    for (final n in oldNodes)
+      if (n.nodeType == 'subject') n.code: n,
+  };
+  final newSubjects = {
+    for (final n in newNodes)
+      if (n.nodeType == 'subject') n.code: n,
+  };
+  final codes = {...oldSubjects.keys, ...newSubjects.keys}.toList()
+    ..sort(
+      (a, b) => (newSubjects[a]?.sortOrder ?? oldSubjects[a]?.sortOrder ?? 0)
+          .compareTo(
+            newSubjects[b]?.sortOrder ?? oldSubjects[b]?.sortOrder ?? 0,
+          ),
+    );
+
+  return [
+    for (final code in codes)
+      SyllabusSubject(
+        id: code,
+        name: newSubjects[code]?.name ?? oldSubjects[code]!.name,
+        oldMarks: (oldSubjects[code]?.marks ?? 0).round(),
+        newMarks: (newSubjects[code]?.marks ?? 0).round(),
+      ),
+  ];
+});
+
+/// For every question id across every published past paper, every edition
+/// it appeared in — used to flag repeated questions on a paper's analysis.
+final bcsQuestionEditionsProvider = FutureProvider<Map<String, Set<int>>>((
+  ref,
+) async {
+  final ready = await ref.watch(bcsPapersReadyProvider.future);
+  final papers = await Future.wait([
+    for (final e in ready) ref.watch(bcsPaperProvider(e.number).future),
+  ]);
+  final editions = <String, Set<int>>{};
+  for (final paper in papers) {
+    for (final q in paper.questions) {
+      editions.putIfAbsent(q.question.id, () => {}).add(paper.number);
+    }
+  }
+  return editions;
+});
+
+/// A paper's analysis: everyone's average and hardest questions come from
+/// the API once its sitting window has closed; the rest (my best, top
+/// topics, repeats) is derived from data the app already fetches.
+final bcsEditionAnalysisProvider = FutureProvider.family<EditionAnalysis, int>((
+  ref,
+  number,
+) async {
+  final paper = await ref.watch(bcsPaperProvider(number).future);
+  final edition = await ref.watch(bcsEditionProvider(number).future);
+  final questionEditions = await ref.watch(bcsQuestionEditionsProvider.future);
+
+  final topTopics = [
+    for (final subject in paper.subjects)
+      if (subject.id != 'all')
+        for (final (_, label, count) in subject.topics)
+          ('${subject.label}: $label', count),
+  ]..sort((a, b) => b.$2.compareTo(a.$2));
+
+  final repeated = paper.questions
+      .where((q) => (questionEditions[q.question.id]?.length ?? 1) > 1)
+      .length;
+
+  double? average;
+  var hardest = const <HardQuestion>[];
+  if (paper.examId != null) {
+    try {
+      final stats = await ref
+          .read(_examApiProvider)
+          .getExamStats(paper.examId!);
+      average = stats.participants > 0 ? stats.average : null;
+      hardest = [
+        for (final h in stats.hardest)
+          HardQuestion(h.questionText, h.correctPercent),
+      ];
+    } catch (_) {
+      // Stats aren't open yet (exam still running) or the call failed;
+      // the rest of the analysis still works without them.
+    }
+  }
+
+  return EditionAnalysis(
+    average: average,
+    myBest: edition.bestScore,
+    repeated: repeated,
+    topTopics: topTopics.take(5).toList(),
+    hardest: hardest,
+  );
+});

@@ -5,34 +5,64 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/ds.dart';
-import '../data/bcs_models.dart';
-import '../data/bcs_sample_data.dart';
 import '../data/bcs_api.dart';
+import '../data/bcs_models.dart';
+import 'bcs_async.dart';
 import 'bcs_format.dart';
 
 enum _View { old, current, compare }
 
 /// The old syllabus (the one this paper was set on), the new one, and what
 /// changed between them.
-class SyllabusScreen extends ConsumerStatefulWidget {
+class SyllabusScreen extends ConsumerWidget {
   final int number;
 
   const SyllabusScreen({required this.number, super.key});
 
   @override
-  ConsumerState<SyllabusScreen> createState() => _SyllabusScreenState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final edition = ref.watch(bcsEditionProvider(number));
+    final rows = ref.watch(bcsSyllabusCompareProvider);
+    return BcsAsync(
+      title: 'সিলেবাস',
+      value: edition,
+      onRetry: () => ref.invalidate(bcsEditionProvider(number)),
+      builder: (edition) => BcsAsync(
+        title: 'সিলেবাস',
+        value: rows,
+        onRetry: () => ref.invalidate(bcsSyllabusCompareProvider),
+        builder: (rows) =>
+            _SyllabusBody(number: number, edition: edition, rows: rows),
+      ),
+    );
+  }
 }
 
-class _SyllabusScreenState extends ConsumerState<SyllabusScreen> {
+class _SyllabusBody extends ConsumerStatefulWidget {
+  final int number;
+  final BcsEdition edition;
+  final List<SyllabusSubject> rows;
+
+  const _SyllabusBody({
+    required this.number,
+    required this.edition,
+    required this.rows,
+  });
+
+  @override
+  ConsumerState<_SyllabusBody> createState() => _SyllabusBodyState();
+}
+
+class _SyllabusBodyState extends ConsumerState<_SyllabusBody> {
   _View _view = _View.compare;
 
   @override
   Widget build(BuildContext context) {
-    final repo = ref.watch(bcsRepositoryProvider);
     final running = ref.watch(bcsRunningNumberProvider);
-    final edition = repo.edition(widget.number);
-    final oldRef = edition.status == EditionStatus.running ? 44 : widget.number;
-    final rows = repo.syllabus();
+    final oldRef = widget.edition.status == EditionStatus.running
+        ? 44
+        : widget.number;
+    final rows = widget.rows;
     final oldTotal = rows.fold<int>(0, (s, r) => s + r.oldMarks);
     final newTotal = rows.fold<int>(0, (s, r) => s + r.newMarks);
     final cmp = _view == _View.compare;

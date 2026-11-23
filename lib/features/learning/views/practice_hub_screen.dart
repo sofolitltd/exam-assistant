@@ -7,9 +7,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/ds.dart';
 import '../../bcs/data/bcs_api.dart';
-import '../../bcs/data/bcs_sample_data.dart';
 import '../../bcs/views/bcs_format.dart';
 import '../../exam/views/home_screen.dart';
+import '../controllers/learning_providers.dart';
 
 /// অনুশীলন tab: one main task (mistakes to clear) and every practice tool.
 class PracticeHubScreen extends ConsumerWidget {
@@ -17,10 +17,13 @@ class PracticeHubScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final repo = ref.watch(bcsRepositoryProvider);
-    final running = repo.runningEdition();
+    final mistakes = ref.watch(mistakesProvider(null));
     final runningNumber = ref.watch(bcsRunningNumberProvider);
     final papers = ref.watch(bcsPapersReadyProvider).value ?? const [];
+    final mistakesText = mistakes.items.isEmpty
+        ? (mistakes.isLoading ? 'লোড হচ্ছে…' : 'কোনো ভুল বাকি নেই। দারুণ!')
+        : '${bn(mistakes.items.length)}${mistakes.hasMore ? '+' : ''}টি '
+              'প্রশ্ন আবার দেওয়া বাকি। ঠিক করলে তালিকা থেকে সরে যাবে।';
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -60,8 +63,7 @@ class PracticeHubScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${bn(running.pendingMistakes)}টি প্রশ্ন আবার দেওয়া বাকি। '
-                          'ঠিক করলে তালিকা থেকে সরে যাবে।',
+                          mistakesText,
                           style: dsText(13, color: AppColors.muted),
                         ),
                         const SizedBox(height: 14),

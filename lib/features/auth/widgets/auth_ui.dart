@@ -254,23 +254,29 @@ class PasswordToggle extends StatelessWidget {
 class AuthSubmitButton extends StatelessWidget {
   final String label;
   final bool busy;
+  final bool enabled;
   final VoidCallback onPressed;
 
   const AuthSubmitButton({
     required this.label,
     required this.busy,
     required this.onPressed,
+    this.enabled = true,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: busy ? AppColors.brandStrong : AppColors.brand,
+      color: !enabled
+          ? AppColors.lineStrong
+          : busy
+          ? AppColors.brandStrong
+          : AppColors.brand,
       borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: busy ? null : onPressed,
+        onTap: (busy || !enabled) ? null : onPressed,
         child: SizedBox(
           height: 50,
           child: Center(

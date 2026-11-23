@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../auth/controllers/auth_controller.dart';
 
@@ -13,6 +14,48 @@ final noticesProvider = FutureProvider<List<Notice>>((ref) async {
   return response
       .map((item) => Notice.fromJson(Map<String, dynamic>.from(item as Map)))
       .toList();
+});
+
+/// When the user last opened the notices screen, kept on the device only
+/// (the API has no per-user read state for notices).
+class NoticesLastSeenNotifier extends AsyncNotifier<DateTime?> {
+  static const _key = 'exam_assistant_notices_last_seen';
+  static const _storage = FlutterSecureStorage();
+
+  @override
+  Future<DateTime?> build() async {
+    try {
+      final raw = await _storage.read(key: _key);
+      return raw == null ? null : DateTime.tryParse(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> markSeenNow() async {
+    final now = DateTime.now();
+    state = AsyncData(now);
+    try {
+      await _storage.write(key: _key, value: now.toIso8601String());
+    } catch (_) {
+      // Keep the in-memory timestamp even if the device store fails.
+    }
+  }
+}
+
+final noticesLastSeenProvider =
+    AsyncNotifierProvider<NoticesLastSeenNotifier, DateTime?>(
+      NoticesLastSeenNotifier.new,
+    );
+
+/// Whether any notice is newer than the last time the user opened the
+/// notices screen.
+final noticesUnreadProvider = Provider<bool>((ref) {
+  final notices = ref.watch(noticesProvider).value;
+  if (notices == null || notices.isEmpty) return false;
+  final lastSeen = ref.watch(noticesLastSeenProvider).value;
+  if (lastSeen == null) return true;
+  return notices.any((n) => n.createdAt.isAfter(lastSeen));
 });
 
 class Notice {
@@ -40,11 +83,24 @@ class Notice {
   }
 }
 
-class NoticesScreen extends ConsumerWidget {
+class NoticesScreen extends ConsumerStatefulWidget {
   const NoticesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NoticesScreen> createState() => _NoticesScreenState();
+}
+
+class _NoticesScreenState extends ConsumerState<NoticesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => ref.read(noticesLastSeenProvider.notifier).markSeenNow(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final noticesAsync = ref.watch(noticesProvider);
 
     return Scaffold(

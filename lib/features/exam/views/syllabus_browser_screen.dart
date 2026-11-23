@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../auth/controllers/auth_controller.dart';
+import '../controllers/taxonomy_providers.dart';
 import '../data/services/taxonomy_api_service.dart';
 
 class SyllabusBrowserScreen extends ConsumerStatefulWidget {
@@ -16,7 +16,6 @@ class SyllabusBrowserScreen extends ConsumerStatefulWidget {
 }
 
 class _SyllabusBrowserScreenState extends ConsumerState<SyllabusBrowserScreen> {
-  late final TaxonomyApiService _service;
   late Future<List<SyllabusVersion>> _syllabiFuture;
   Future<List<SyllabusNode>>? _nodesFuture;
   int? _selectedSyllabusId;
@@ -24,14 +23,11 @@ class _SyllabusBrowserScreenState extends ConsumerState<SyllabusBrowserScreen> {
   @override
   void initState() {
     super.initState();
-    _service = TaxonomyApiService(
-      accountApi: ref.read(accountApiServiceProvider),
-    );
     _syllabiFuture = _loadSyllabi();
   }
 
   Future<List<SyllabusVersion>> _loadSyllabi() async {
-    final versions = await _service.getSyllabi(widget.programId);
+    final versions = await ref.read(syllabiProvider(widget.programId).future);
     if (versions.isNotEmpty && mounted) {
       final selected = versions.firstWhere(
         (version) => version.status == 'current',
@@ -39,7 +35,9 @@ class _SyllabusBrowserScreenState extends ConsumerState<SyllabusBrowserScreen> {
       );
       setState(() {
         _selectedSyllabusId = selected.syllabusId;
-        _nodesFuture = _service.getNodes(selected.syllabusId);
+        _nodesFuture = ref.read(
+          syllabusNodesProvider(selected.syllabusId).future,
+        );
       });
     }
     return versions;
@@ -49,7 +47,7 @@ class _SyllabusBrowserScreenState extends ConsumerState<SyllabusBrowserScreen> {
     if (syllabusId == null) return;
     setState(() {
       _selectedSyllabusId = syllabusId;
-      _nodesFuture = _service.getNodes(syllabusId);
+      _nodesFuture = ref.read(syllabusNodesProvider(syllabusId).future);
     });
   }
 

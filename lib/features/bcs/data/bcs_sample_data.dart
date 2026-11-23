@@ -1,18 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../exam/data/models/question_model.dart';
 import 'bcs_models.dart';
 
 /// SAMPLE DATA for the parts of the বিসিএস flow the API cannot serve yet:
-/// the running/upcoming edition, live-exam schedule, live merit lists,
-/// syllabus comparison and paper analysis.
+/// the running/upcoming edition's live-exam schedule and live merit lists.
 ///
 /// Finished papers (the edition list, their questions, the user's scores,
-/// ranks and mistakes) are real and come from `bcs_api.dart`.
+/// ranks and mistakes) and syllabus comparison are real and come from
+/// `bcs_api.dart`.
 class BcsRepository {
   const BcsRepository();
-
-  static const optionKeys = ['ক', 'খ', 'গ', 'ঘ'];
 
   /// Fallback only, while the real list (bcsListProvider) loads.
   BcsEdition runningEdition() =>
@@ -223,24 +220,6 @@ class BcsRepository {
     ),
   ];
 
-  EditionAnalysis analysis(int edition) => const EditionAnalysis(
-    average: 112,
-    myBest: 138.5,
-    repeated: 24,
-    topTopics: [
-      ('English: Grammar', 10),
-      ('বাংলা ব্যাকরণ: সমাস ও সন্ধি', 7),
-      ('মুক্তিযুদ্ধ', 6),
-      ('জাতিসংঘ ও সংস্থা', 5),
-      ('সংবিধান', 4),
-    ],
-    hardest: [
-      HardQuestion('নিচের কোনটি শুদ্ধ বানান?', 18),
-      HardQuestion('একটি সংখ্যার ৩/৫ অংশ থেকে ১২ বিয়োগ করলে…', 22),
-      HardQuestion("'Make up one's mind' means…", 29),
-    ],
-  );
-
   List<PaperSubject> paperSubjects() => const [
     PaperSubject(id: 'all', label: 'সব', count: 200),
     PaperSubject(
@@ -274,107 +253,6 @@ class BcsRepository {
     PaperSubject(id: 'mental', label: 'মানসিক দক্ষতা', count: 15),
     PaperSubject(id: 'ethics', label: 'নৈতিকতা', count: 10),
   ];
-
-  /// Questions of a paper. The sample has only a handful; the real API
-  /// returns the selected subject/topic slice.
-  List<PaperQuestion> paperQuestions(int edition) {
-    QuestionModel q(
-      String id,
-      String text,
-      List<String> options,
-      int answer,
-      String subject, [
-      String? explanation,
-    ]) {
-      return QuestionModel(
-        id: 'bcs$edition-$id',
-        examId: 'bcs-$edition',
-        questionText: text,
-        subject: subject,
-        options: [
-          for (var i = 0; i < options.length; i++)
-            QuestionOption(key: optionKeys[i], value: options[i]),
-        ],
-        correctOptionKeys: [optionKeys[answer]],
-        explanation: explanation,
-        sourceYear: '$edition',
-      );
-    }
-
-    return [
-      PaperQuestion(
-        q(
-          '1',
-          'জাতিসংঘের সদর দপ্তর কোথায় অবস্থিত?',
-          ['জেনেভা', 'নিউইয়র্ক', 'ভিয়েনা', 'প্যারিস'],
-          1,
-          'আন্তর্জাতিক',
-          'যুক্তরাষ্ট্রের নিউইয়র্কে। জেনেভা, ভিয়েনা আর নাইরোবিতে আঞ্চলিক কার্যালয় আছে।',
-        ),
-        appearedIn: [44, 38],
-      ),
-      PaperQuestion(
-        q(
-          '2',
-          'আসিয়ানের সচিবালয় কোথায়?',
-          ['ব্যাংকক', 'কুয়ালালামপুর', 'জাকার্তা', 'ম্যানিলা'],
-          2,
-          'আন্তর্জাতিক',
-          'আসিয়ানের সচিবালয় ইন্দোনেশিয়ার জাকার্তায়।',
-        ),
-        appearedIn: [44, 41, 36],
-      ),
-      PaperQuestion(
-        q(
-          '3',
-          'ন্যাটো কোন সালে প্রতিষ্ঠিত হয়?',
-          ['১৯৪৫', '১৯৪৯', '১৯৫৫', '১৯৯১'],
-          1,
-          'আন্তর্জাতিক',
-          '১৯৪৯ সালের ৪ এপ্রিল ওয়াশিংটন চুক্তির মাধ্যমে।',
-        ),
-        appearedIn: [44],
-      ),
-      PaperQuestion(
-        q(
-          '4',
-          'সার্ক কোন সালে প্রতিষ্ঠিত হয়?',
-          ['১৯৭৫', '১৯৮০', '১৯৮৫', '১৯৯০'],
-          2,
-          'আন্তর্জাতিক',
-          '১৯৮৫ সালের ডিসেম্বরে ঢাকায় প্রথম শীর্ষ সম্মেলনে।',
-        ),
-        appearedIn: [44, 40],
-      ),
-      PaperQuestion(
-        q(
-          '5',
-          '‘অপরাজেয় বাংলা’ ভাস্কর্যের ভাস্কর কে?',
-          [
-            'সৈয়দ আব্দুল্লাহ খালিদ',
-            'হামিদুর রহমান',
-            'নভেরা আহমেদ',
-            'শামীম শিকদার',
-          ],
-          0,
-          'বাংলাদেশ',
-          '১৯৭৯ সালে ঢাকা বিশ্ববিদ্যালয়ের কলাভবনের সামনে স্থাপিত।',
-        ),
-        appearedIn: [44, 37],
-      ),
-      PaperQuestion(
-        q(
-          '6',
-          'Which one is the correct spelling?',
-          ['Accommodation', 'Accomodation', 'Acommodation', 'Accommadation'],
-          0,
-          'English',
-          'Accommodation has a double c and a double m.',
-        ),
-        appearedIn: [44],
-      ),
-    ];
-  }
 }
 
 final bcsRepositoryProvider = Provider<BcsRepository>(

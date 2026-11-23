@@ -5,13 +5,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
-import '../../../core/widgets/brand_mark.dart';
 import '../../../core/widgets/ds.dart';
 import '../../bcs/data/bcs_models.dart';
 import '../../bcs/data/bcs_sample_data.dart';
 import '../../bcs/data/bcs_api.dart';
 import '../../bcs/views/bcs_async.dart';
 import '../../bcs/views/bcs_format.dart';
+import '../../notices/views/notices_screen.dart';
 import '../data/home_categories.dart';
 
 /// Hidden for now (user's choice, 2026-11-21): the "আজ" card runs on
@@ -170,12 +170,32 @@ class HomeTopBar extends StatelessWidget {
         padding: const EdgeInsets.only(left: 16, right: 4),
         child: Row(
           children: [
-            const BrandMark(size: 30),
-            const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                'Exam Assistant',
-                style: dsText(19, weight: FontWeight.w700),
+              child: Material(
+                color: AppColors.sunken,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => context.push('/bcs/pyq'),
+                  child: SizedBox(
+                    height: 42,
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        const Icon(
+                          LucideIcons.search,
+                          size: 18,
+                          color: AppColors.muted,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'প্রশ্ন খোঁজো',
+                          style: dsText(14, color: AppColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
             const NoticeBell(),
@@ -186,13 +206,12 @@ class HomeTopBar extends StatelessWidget {
   }
 }
 
-class NoticeBell extends StatelessWidget {
-  final bool unread;
-
-  const NoticeBell({this.unread = true, super.key});
+class NoticeBell extends ConsumerWidget {
+  const NoticeBell({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unread = ref.watch(noticesUnreadProvider);
     return IconButton(
       tooltip: 'নোটিশ',
       onPressed: () => context.push('/notices'),
@@ -263,7 +282,7 @@ class _CategoryTile extends StatelessWidget {
       title: category.name,
       subtitle: category.status,
       titleSize: 16,
-      minHeight: 72,
+      minHeight: 96,
       highlighted: category.running,
       subtitleColor: category.running ? AppColors.liveInk : null,
       subtitleLeading: category.running ? const LiveDot() : null,

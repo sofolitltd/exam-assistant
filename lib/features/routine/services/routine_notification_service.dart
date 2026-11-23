@@ -27,7 +27,10 @@ class RoutineNotificationService {
     );
     const iosSettings = DarwinInitializationSettings();
     await _plugin.initialize(
-      const InitializationSettings(android: androidSettings, iOS: iosSettings),
+      settings: const InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      ),
     );
     _initialized = true;
   }
@@ -82,9 +85,9 @@ class RoutineNotificationService {
   }
 
   Future<void> cancelAll() async {
-    await _plugin.cancel(_afternoonCheckInId);
-    await _plugin.cancel(_nightCheckInId);
-    await _plugin.cancel(_weeklySummaryId);
+    await _plugin.cancel(id: _afternoonCheckInId);
+    await _plugin.cancel(id: _nightCheckInId);
+    await _plugin.cancel(id: _weeklySummaryId);
   }
 
   Future<void> _scheduleDaily({
@@ -95,11 +98,11 @@ class RoutineNotificationService {
     required String body,
   }) async {
     await _plugin.zonedSchedule(
-      id,
-      title,
-      body,
-      _nextInstanceOfTime(hour, minute),
-      _notificationDetails(),
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: _nextInstanceOfTime(hour, minute),
+      notificationDetails: _notificationDetails(),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
@@ -114,11 +117,11 @@ class RoutineNotificationService {
     required String body,
   }) async {
     await _plugin.zonedSchedule(
-      id,
-      title,
-      body,
-      _nextInstanceOfWeekday(weekday, hour, minute),
-      _notificationDetails(),
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: _nextInstanceOfWeekday(weekday, hour, minute),
+      notificationDetails: _notificationDetails(),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
     );

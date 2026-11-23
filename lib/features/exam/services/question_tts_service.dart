@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -50,12 +52,26 @@ class QuestionTtsService {
   final FlutterTts _tts = FlutterTts();
   final ValueNotifier<String?> activeQuestionId = ValueNotifier<String?>(null);
   bool _initialized = false;
+  Future<void>? _initializing;
   int _playToken = 0;
+
+  QuestionTtsService() {
+    // Kick off voice selection as soon as the service exists instead of on
+    // the first tap. On web, speechSynthesis.speak() must run inside the
+    // click's own call stack or the browser silently ignores it; doing the
+    // async setup (isLanguageAvailable/getVoices lookups) ahead of time
+    // keeps the actual speak() call right next to the user gesture.
+    unawaited(_ensureInitialized());
+  }
 
   bool get isSpeaking => activeQuestionId.value != null;
 
-  Future<void> _ensureInitialized() async {
-    if (_initialized) return;
+  Future<void> _ensureInitialized() {
+    if (_initialized) return Future.value();
+    return _initializing ??= _doInitialize();
+  }
+
+  Future<void> _doInitialize() async {
     _initialized = true;
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
       // Keep speaking with the screen locked / app in the background, for
@@ -83,8 +99,8 @@ class QuestionTtsService {
           await _tts.setLanguage(locale);
           return;
         }
-      } catch (_) {
-        // Try the next candidate locale.
+      } catch (e) {
+        debugPrint('QuestionTtsService: isLanguageAvailable($locale) failed: $e');
       }
     }
 
@@ -101,9 +117,9 @@ class QuestionTtsService {
           return;
         }
       }
-    } catch (_) {
-      // No Bangla voice is installed on this device; it will fall back to
-      // the engine's default voice.
+      // No Bangla voice found; falls back to the engine's default voice.
+    } catch (e) {
+      debugPrint('QuestionTtsService: getVoices failed: $e');
     }
   }
 
@@ -177,7 +193,11 @@ class QuestionTtsService {
       onQuestionStart?.call(i);
       for (final segment in _buildSegments(question, options)) {
         if (_playToken != token) return;
-        await _tts.speak(segment);
+        try {
+          await _tts.speak(segment);
+        } catch (e) {
+          debugPrint('QuestionTtsService: speak() failed: $e');
+        }
       }
     }
 

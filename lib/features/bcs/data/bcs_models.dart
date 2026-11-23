@@ -189,7 +189,7 @@ class HardQuestion {
 }
 
 class EditionAnalysis {
-  final double average;
+  final double? average;
   final double? myBest;
   final int repeated;
   final List<(String, int)> topTopics;
