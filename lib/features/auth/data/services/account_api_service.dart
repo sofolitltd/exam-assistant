@@ -107,6 +107,17 @@ class AccountApiService {
     }
   }
 
+  /// Permanently deletes the signed-in account and its data; the password
+  /// re-confirms identity so a leaked session token alone cannot destroy it.
+  Future<void> deleteAccount({required String password}) async {
+    await _request(
+      'DELETE',
+      '/v1/users/me',
+      body: {'password': password},
+    );
+    await _clearSession();
+  }
+
   Future<void> signOut() async {
     final token = await _getAccessToken();
     await _clearSession();
@@ -250,7 +261,11 @@ class AccountApiService {
       'GET' => await _client.get(uri, headers: headers),
       'POST' => await _client.post(uri, headers: headers, body: encodedBody),
       'PUT' => await _client.put(uri, headers: headers, body: encodedBody),
-      'DELETE' => await _client.delete(uri, headers: headers),
+      'DELETE' => await _client.delete(
+        uri,
+        headers: headers,
+        body: encodedBody,
+      ),
       _ => throw ArgumentError.value(
         method,
         'method',

@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/ds.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../auth/widgets/auth_ui.dart';
 import '../../goals/data/goals.dart';
 import '../../goals/views/goals_sheet.dart';
 import '../../learning/controllers/learning_providers.dart';
@@ -413,6 +414,24 @@ class ProfileView extends ConsumerWidget {
                           ),
                         ),
                       ),
+                      InkWell(
+                        onTap: () => _confirmDeleteAccount(context, ref),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 13,
+                          ),
+                          child: Text(
+                            'অ্যাকাউন্ট ডিলিট করো',
+                            style: dsText(
+                              15,
+                              weight: FontWeight.w600,
+                              color: AppColors.danger,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -512,6 +531,120 @@ Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
   if (!ok) return;
   await ref.read(authControllerProvider.notifier).signOut();
   appRouter.go('/login');
+}
+
+Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+  final proceed = await showConfirmDialog(
+    context,
+    title: 'অ্যাকাউন্ট ডিলিট করবে?',
+    message:
+        'তোমার প্রোফাইল, পরীক্ষার ফলাফল, রুটিন আর লক্ষ্য — সব স্থায়ীভাবে মুছে যাবে। এটা আর ফেরত আনা যাবে না।',
+    confirmLabel: 'এগিয়ে যাও',
+    destructive: true,
+  );
+  if (!proceed || !context.mounted) return;
+
+  final passwordController = TextEditingController();
+  String? errorText;
+  var busy = false;
+  final deleted = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (dialogContext, setDialogState) {
+        Future<void> submit() async {
+          if (passwordController.text.isEmpty) {
+            setDialogState(() => errorText = 'পাসওয়ার্ড লাগবে');
+            return;
+          }
+          setDialogState(() {
+            busy = true;
+            errorText = null;
+          });
+          try {
+            await ref
+                .read(authControllerProvider.notifier)
+                .deleteAccount(password: passwordController.text);
+            if (dialogContext.mounted) {
+              Navigator.of(dialogContext).pop(true);
+            }
+          } catch (_) {
+            setDialogState(() {
+              busy = false;
+              errorText = 'পাসওয়ার্ড ভুল অথবা ডিলিট করা যায়নি';
+            });
+          }
+        }
+
+        return AlertDialog(
+          backgroundColor: AppColors.paper,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'পাসওয়ার্ড দাও',
+            style: dsText(18, weight: FontWeight.w700),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'নিশ্চিত হতে তোমার পাসওয়ার্ড দাও।',
+                style: dsText(14, color: AppColors.ink2, height: 1.5),
+              ),
+              const SizedBox(height: 12),
+              AuthField(
+                label: 'পাসওয়ার্ড',
+                controller: passwordController,
+                obscure: true,
+                keyboardType: TextInputType.visiblePassword,
+                helper: errorText,
+                onSubmitted: (_) => submit(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: busy
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                'থাক',
+                style: dsText(
+                  15,
+                  weight: FontWeight.w600,
+                  color: AppColors.muted,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: busy ? null : submit,
+              child: busy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      'স্থায়ীভাবে ডিলিট করো',
+                      style: dsText(
+                        15,
+                        weight: FontWeight.w700,
+                        color: AppColors.danger,
+                      ),
+                    ),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+
+  if (deleted == true && context.mounted) {
+    appRouter.go('/login');
+  }
 }
 
 Future<void> _pickTextSize(

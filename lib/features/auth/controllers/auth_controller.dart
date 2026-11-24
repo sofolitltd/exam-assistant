@@ -82,4 +82,15 @@ class AuthController extends _$AuthController {
       rethrow;
     }
   }
+
+  Future<void> deleteAccount({required String password}) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(authServiceProvider).deleteAccount(password: password);
+      state = const AsyncValue.data(null);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
+  }
 }
