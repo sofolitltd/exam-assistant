@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/responsive_wrapper.dart';
+import '../../../core/utils/bangla_digits.dart';
+import '../../../core/widgets/ds.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../auth/data/models/user_model.dart';
+import '../../learning/views/rank_row.dart';
 
 final leaderboardProvider = FutureProvider<List<UserModel>>((ref) async {
   final user = ref.watch(authStateChangesProvider).value;
@@ -12,119 +15,62 @@ final leaderboardProvider = FutureProvider<List<UserModel>>((ref) async {
   return ref.read(accountApiServiceProvider).getLeaderboard();
 });
 
+/// Overall leaderboard (top 20 by highest score), opened from profile.
 class LeaderboardView extends ConsumerWidget {
   const LeaderboardView({super.key});
 
-  static const _medals = ['🥇', '🥈', '🥉'];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final leaderboardAsync = ref.watch(leaderboardProvider);
+    final boardAsync = ref.watch(leaderboardProvider);
+    final myId = ref.watch(authStateChangesProvider).value?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: Text("Leaderboard")),
-      body: leaderboardAsync.when(
-        data: (users) => RefreshIndicator(
-          onRefresh: () async => ref.refresh(leaderboardProvider),
-          child: ResponsiveWrapper(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: users.length,
-              itemBuilder: (context, index) {
-                final user = users[index];
-                final isTopThree = index < 3;
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Material(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[200]!),
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 40,
-                              child: isTopThree
-                                  ? Text(
-                                      _medals[index],
-                                      style: const TextStyle(fontSize: 24),
-                                      textAlign: TextAlign.center,
-                                    )
-                                  : CircleAvatar(
-                                      radius: 16,
-                                      backgroundColor: Colors.grey[200],
-                                      child: Text(
-                                        '${index + 1}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    user.name.isNotEmpty ? user.name : ' ',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.primaryColor.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      'Avg: ${user.averageScore.toStringAsFixed(1)}  |  ${user.totalExamsAttended} exams',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppTheme.primaryColor,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              user.highestScore.toStringAsFixed(1),
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+      backgroundColor: AppColors.canvas,
+      appBar: const DsHeader(title: 'লিডারবোর্ড', subtitle: 'সেরা ২০ জন'),
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(leaderboardProvider.future),
+        child: boardAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, _) => RankMessage(
+            icon: LucideIcons.wifiOff,
+            text: 'লিডারবোর্ড আনা যায়নি',
+            action: DsSmallButton(
+              label: 'আবার চেষ্টা করো',
+              onPressed: () => ref.invalidate(leaderboardProvider),
             ),
           ),
+          data: (users) {
+            if (users.isEmpty) {
+              return const RankMessage(
+                icon: LucideIcons.trophy,
+                text: 'এখনো কেউ পরীক্ষা দেয়নি',
+              );
+            }
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              children: [
+                const SectionLabel('ক্রম', trailing: 'সর্বোচ্চ নম্বর'),
+                const SizedBox(height: 8),
+                DsListCard(
+                  children: [
+                    for (var i = 0; i < users.length; i++)
+                      RankRow(
+                        rank: i + 1,
+                        name: users[i].name.isNotEmpty
+                            ? users[i].name
+                            : 'নামহীন',
+                        detail:
+                            'গড় ${bnScore(users[i].averageScore)} · '
+                            '${bn(users[i].totalExamsAttended)}টি পরীক্ষা',
+                        score: bnScore(users[i].highestScore),
+                        isYou: myId != null && users[i].uid == myId,
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );
   }

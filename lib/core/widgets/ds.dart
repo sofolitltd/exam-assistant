@@ -684,7 +684,12 @@ class DsListCard extends StatelessWidget {
     return DsCard(
       padding: EdgeInsets.zero,
       radius: radius,
-      child: Column(children: items),
+      // Stretch so every row spans the card; otherwise a row without its
+      // own Expanded shrinks to its text and gets centered.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: items,
+      ),
     );
   }
 }

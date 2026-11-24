@@ -67,7 +67,7 @@ class _BcsScreenState extends ConsumerState<BcsScreen> {
     final pyqQuestions = ready.fold<int>(0, (sum, e) => sum + e.totalQuestions);
 
     return DsPage(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       children: [
         if (running != null)
           DsCard(
