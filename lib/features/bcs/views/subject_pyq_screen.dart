@@ -874,12 +874,18 @@ class _TopicRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            Text(
-              topic.editions.map(bn).join(', '),
-              style: dsText(
-                12,
-                weight: FontWeight.w600,
-                color: AppColors.brand,
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 96),
+              child: Text(
+                topic.editions.map(bn).join(', '),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: dsText(
+                  12,
+                  weight: FontWeight.w600,
+                  color: AppColors.brand,
+                ),
               ),
             ),
             const SizedBox(width: 4),

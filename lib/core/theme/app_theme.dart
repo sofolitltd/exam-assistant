@@ -70,12 +70,14 @@ class AppTheme {
     double? height,
     double? letterSpacing,
   }) {
+    // Null would inherit Material 3's 0.25–0.5px body tracking, which
+    // spreads Bangla conjuncts apart.
     return GoogleFonts.notoSans(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
       height: height,
-      letterSpacing: letterSpacing,
+      letterSpacing: letterSpacing ?? 0,
     ).copyWith(fontFamilyFallback: fontFallback);
   }
 
