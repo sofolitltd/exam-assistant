@@ -119,7 +119,7 @@ class RoutineNotificationService {
       body: body,
       scheduledDate: _nextInstanceOfTime(hour, minute),
       notificationDetails: _notificationDetails(),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
@@ -138,7 +138,7 @@ class RoutineNotificationService {
       body: body,
       scheduledDate: _nextInstanceOfWeekday(weekday, hour, minute),
       notificationDetails: _notificationDetails(),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
     );
   }
