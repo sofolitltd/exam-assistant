@@ -86,7 +86,7 @@ class _AnalysisBody extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'কোন topic থেকে বেশি এসেছে',
+                'কোন টপিক থেকে বেশি এসেছে',
                 style: dsText(15, weight: FontWeight.w600),
               ),
               for (final (name, count) in a.topTopics) ...[

@@ -396,6 +396,10 @@ class ProfileView extends ConsumerWidget {
                         'সাহায্য ও মতামত',
                         onTap: () => context.push('/profile/help'),
                       ),
+                      _setting(
+                        'তথ্যের উৎস ও দাবিত্যাগ',
+                        onTap: () => context.push('/profile/sources'),
+                      ),
                       InkWell(
                         onTap: () => _confirmSignOut(context, ref),
                         child: Container(

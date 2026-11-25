@@ -20,7 +20,7 @@ final class RoutineControllerProvider
         argument: null,
         retry: null,
         name: r'routineControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -41,7 +41,7 @@ final class RoutineControllerProvider
   }
 }
 
-String _$routineControllerHash() => r'3a06b4c9aa7d14ad126f1a6635fd6863bd36ea98';
+String _$routineControllerHash() => r'1ba47d60af2db11428b50b1bf4f2aac5f82ee9e8';
 
 abstract class _$RoutineController extends $Notifier<AsyncValue<void>> {
   AsyncValue<void> build();

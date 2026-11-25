@@ -242,7 +242,7 @@ class PaperSelection {
     subjectId: 'all',
     subjectLabel: 'সব বিষয়',
     topicId: 'all',
-    topicLabel: 'সব topic',
+    topicLabel: 'সব টপিক',
     wrongOnly: false,
     count: 20,
   );

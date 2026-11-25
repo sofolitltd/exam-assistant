@@ -6,6 +6,8 @@ import '../../../core/riverpod/paged_state.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../data/learning_api_service.dart';
 import '../data/learning_models.dart';
+import '../data/practice_models.dart';
+import '../data/practice_recorder.dart';
 
 final learningApiServiceProvider = Provider<LearningApiService>((ref) {
   return LearningApiService(ref.watch(accountApiServiceProvider));
@@ -42,6 +44,64 @@ final mistakesProvider =
       String?
     >(MistakesNotifier.new);
 
+/// Which mistakes to show: where they were made and in which subject.
+typedef MistakeFilter = ({String? examId, String? mode, int? subjectId});
+
+/// Wrong answers (not skips) for the আমার ভুল screen, filtered.
+class FilteredMistakesNotifier extends PagedNotifier<MistakeQuestion> {
+  FilteredMistakesNotifier(this.filter);
+
+  final MistakeFilter filter;
+
+  @override
+  Future<PaginatedList<MistakeQuestion>> fetchPage(int limit, int offset) {
+    return ref
+        .read(learningApiServiceProvider)
+        .getMistakes(
+          examId: filter.examId,
+          mode: filter.mode,
+          subjectId: filter.subjectId,
+          includeSkipped: false,
+          limit: limit,
+          offset: offset,
+        );
+  }
+}
+
+final filteredMistakesProvider =
+    NotifierProvider.family<
+      FilteredMistakesNotifier,
+      PagedState<MistakeQuestion>,
+      MistakeFilter
+    >(FilteredMistakesNotifier.new);
+
+final mistakeSummaryProvider = FutureProvider.autoDispose<MistakeSummary>((
+  ref,
+) {
+  return ref.read(learningApiServiceProvider).getMistakeSummary();
+});
+
+final practiceSummaryProvider = FutureProvider.autoDispose<PracticeSummary>((
+  ref,
+) {
+  return ref.read(learningApiServiceProvider).getPracticeSummary();
+});
+
+/// Practice progress per paper, keyed by exam id.
+final examPracticeProgressProvider =
+    FutureProvider.autoDispose<Map<String, ExamPracticeProgress>>((ref) {
+      return ref.read(learningApiServiceProvider).getExamPracticeProgress();
+    });
+
+/// Subject accuracy over the last [days] days for one [mode]
+/// (`exam`, `practice`, or null for both).
+final subjectPerformanceByModeProvider = FutureProvider.autoDispose
+    .family<List<SubjectPerformance>, ({int days, String? mode})>((ref, key) {
+      return ref
+          .read(learningApiServiceProvider)
+          .getSubjectPerformance(days: key.days, mode: key.mode);
+    });
+
 final subjectPerformanceProvider =
     FutureProvider.autoDispose<List<SubjectPerformance>>((ref) {
       return ref.read(learningApiServiceProvider).getSubjectPerformance();
@@ -75,3 +135,26 @@ final strategyProvider = FutureProvider.autoDispose<List<SubjectStrategy>>((
 ) {
   return ref.read(learningApiServiceProvider).getStrategy();
 });
+
+/// Reloads everything that answers feed: mistakes, review, stats, insights.
+/// Call after practice, review or an exam is saved. Takes the container so
+/// it also works after the calling widget is gone
+/// (`ProviderScope.containerOf(context)`).
+void refreshLearningData(ProviderContainer c) {
+  c.invalidate(mistakesProvider);
+  c.invalidate(filteredMistakesProvider);
+  c.invalidate(mistakeSummaryProvider);
+  c.invalidate(practiceSummaryProvider);
+  c.invalidate(examPracticeProgressProvider);
+  c.invalidate(dueReviewsProvider);
+  c.invalidate(subjectPerformanceProvider);
+  c.invalidate(subjectPerformanceByDaysProvider);
+  c.invalidate(subjectPerformanceByModeProvider);
+  c.invalidate(topicInsightsProvider);
+}
+
+final practiceRecorderFactoryProvider =
+    Provider<PracticeRecorder Function(PracticeTarget)>((ref) {
+      final api = ref.watch(learningApiServiceProvider);
+      return (target) => PracticeRecorder(api, target);
+    });

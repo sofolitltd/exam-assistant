@@ -78,7 +78,7 @@ final studyGroupDetailProvider = FutureProvider.autoDispose
           .getStudyGroup(groupId, formatLogDate(DateTime.now()));
     });
 
-@riverpod
+@Riverpod(keepAlive: true)
 class RoutineController extends _$RoutineController {
   @override
   AsyncValue<void> build() => const AsyncValue.data(null);

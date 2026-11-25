@@ -112,10 +112,7 @@ class _ExamRow extends ConsumerWidget {
                     style: dsText(15, weight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    _meta(exam),
-                    style: dsText(12, color: AppColors.muted),
-                  ),
+                  Text(_meta(exam), style: dsText(12, color: AppColors.muted)),
                 ],
               ),
             ),
@@ -207,10 +204,7 @@ class _ExamSheet extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: StatBox(
-                  label: 'প্রশ্ন',
-                  value: bn(exam.questionCount),
-                ),
+                child: StatBox(label: 'প্রশ্ন', value: bn(exam.questionCount)),
               ),
               const SizedBox(width: 8),
               Expanded(

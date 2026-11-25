@@ -28,7 +28,11 @@ abstract class PagedNotifier<T> extends Notifier<PagedState<T>> {
     try {
       final page = await fetchPage(pageSize, 0);
       _offset = page.items.length;
-      state = PagedState(items: page.items, hasMore: page.hasMore, isLoading: false);
+      state = PagedState(
+        items: page.items,
+        hasMore: page.hasMore,
+        isLoading: false,
+      );
     } catch (error) {
       state = PagedState(isLoading: false, error: error);
     }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/ds.dart';
+import '../../../core/widgets/ds_picker.dart';
 import '../data/bcs_api.dart';
 import '../data/bcs_models.dart';
 import 'bcs_async.dart';
@@ -71,7 +72,7 @@ class _ModeSheetState extends ConsumerState<_ModeSheet> {
         ? const <String>{}
         : ref.watch(bcsMistakeIdsProvider(paper.examId!)).value ??
               const <String>{};
-    final topics = [('all', 'সব topic', subject.count), ...subject.topics];
+    final topics = [('all', 'সব টপিক', subject.count), ...subject.topics];
     final topic = topics.firstWhere(
       (t) => t.$1 == _topic,
       orElse: () => topics.first,
@@ -91,12 +92,12 @@ class _ModeSheetState extends ConsumerState<_ModeSheet> {
       ).where((q) => mistakeIds.contains(q.question.id)).length;
     }
 
-    // Header and the start button stay put; only the subject/topic
-    // choices scroll, so a long topic list never pushes the sheet past
-    // the top of the screen.
+    // Subject and topic are one row each that open a list, so the whole
+    // sheet fits on screen and nothing is hidden below a scroll.
+    // Scrolls only as a fallback (very large text on a small phone).
     return SafeArea(
       top: false,
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -131,61 +132,42 @@ class _ModeSheetState extends ConsumerState<_ModeSheet> {
               style: dsText(13, color: AppColors.ink2),
             ),
             const SizedBox(height: 16),
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'বিষয়',
-                      style: dsText(
-                        13,
-                        weight: FontWeight.w600,
-                        color: AppColors.ink2,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final s in subjects)
-                          DsChip(
-                            label: s.label,
-                            selected: s.id == _subject,
-                            onTap: () => setState(() {
-                              _subject = s.id;
-                              _topic = 'all';
-                            }),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Topic',
-                      style: dsText(
-                        13,
-                        weight: FontWeight.w600,
-                        color: AppColors.ink2,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final t in topics)
-                          DsChip(
-                            label: t.$2,
-                            selected: t.$1 == topic.$1,
-                            onTap: () => setState(() => _topic = t.$1),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+            DsPickerRow(
+              label: 'বিষয়',
+              value: subject.id == 'all' ? 'সব বিষয়' : subject.label,
+              count: subject.count,
+              onTap: () async {
+                final id = await showDsPicker(
+                  context,
+                  title: 'বিষয় বেছে নাও',
+                  selected: subject.id,
+                  items: [for (final s in subjects) (s.id, s.label, s.count)],
+                );
+                if (id != null && id != _subject) {
+                  setState(() {
+                    _subject = id;
+                    _topic = 'all';
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+            DsPickerRow(
+              label: 'টপিক',
+              value: topic.$2,
+              count: topic.$3,
+              hint: subject.topics.isEmpty ? 'আগে একটা বিষয় বাছো' : null,
+              onTap: subject.topics.isEmpty
+                  ? null
+                  : () async {
+                      final id = await showDsPicker(
+                        context,
+                        title: '${subject.label} · টপিক',
+                        selected: topic.$1,
+                        items: topics,
+                      );
+                      if (id != null) setState(() => _topic = id);
+                    },
             ),
             const SizedBox(height: 16),
             Material(

@@ -26,6 +26,20 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   ReviewAnswerResult? _result;
   bool _saving = false;
   String? _error;
+  ProviderContainer? _container;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _container = ProviderScope.containerOf(context, listen: false);
+  }
+
+  @override
+  void dispose() {
+    // Review answers count in mistakes and stats too.
+    if (_answered > 0 && _container != null) refreshLearningData(_container!);
+    super.dispose();
+  }
 
   Future<void> _pick(ReviewQuestion q, String key) async {
     if (_saving || _result != null) return;

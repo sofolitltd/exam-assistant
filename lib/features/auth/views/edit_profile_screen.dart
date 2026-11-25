@@ -98,89 +98,92 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AuthField(
-                    label: 'নাম',
-                    controller: _name,
-                    prefix: const Icon(LucideIcons.user, size: 20),
-                    action: TextInputAction.next,
-                    capitalization: TextCapitalization.words,
-                    maxLength: 100,
-                    autofillHints: const [AutofillHints.name],
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'নাম লেখো' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  AuthField(
-                    label: 'মোবাইল নম্বর',
-                    controller: _phone,
-                    prefix: const Icon(LucideIcons.phone, size: 20),
-                    keyboardType: TextInputType.phone,
-                    action: TextInputAction.done,
-                    hint: '০১XXXXXXXXX',
-                    helper: 'না দিলেও চলবে',
-                    autofillHints: const [AutofillHints.telephoneNumber],
-                    onSubmitted: (_) => _save(),
-                    validator: (v) {
-                      final value = v?.trim() ?? '';
-                      if (value.isEmpty) return null;
-                      return normalizeBdPhone(value) == null
-                          ? 'সঠিক মোবাইল নম্বর লেখো (যেমন ০১৭১২৩৪৫৬৭৮)'
-                          : null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text('ইমেইল', style: dsText(14, weight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 14,
+            child: DsCard(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AuthField(
+                      label: 'নাম',
+                      controller: _name,
+                      prefix: const Icon(LucideIcons.user, size: 20),
+                      action: TextInputAction.next,
+                      capitalization: TextCapitalization.words,
+                      maxLength: 100,
+                      autofillHints: const [AutofillHints.name],
+                      validator: (v) =>
+                          (v == null || v.trim().isEmpty) ? 'নাম লেখো' : null,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.sunken,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.lineStrong),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          LucideIcons.mail,
-                          size: 20,
-                          color: AppColors.muted,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            user.email,
-                            style: dsText(16, color: AppColors.muted),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, left: 2),
-                    child: Text(
-                      'এই ইমেইল দিয়ে লগ ইন করো, তাই বদলানো যায় না',
-                      style: dsText(12, color: AppColors.muted),
-                    ),
-                  ),
-                  if (_error != null) ...[
                     const SizedBox(height: 16),
-                    AuthErrorBox(_error!),
+                    AuthField(
+                      label: 'মোবাইল নম্বর',
+                      controller: _phone,
+                      prefix: const Icon(LucideIcons.phone, size: 20),
+                      keyboardType: TextInputType.phone,
+                      action: TextInputAction.done,
+                      hint: '০১XXXXXXXXX',
+                      helper: 'না দিলেও চলবে',
+                      autofillHints: const [AutofillHints.telephoneNumber],
+                      onSubmitted: (_) => _save(),
+                      validator: (v) {
+                        final value = v?.trim() ?? '';
+                        if (value.isEmpty) return null;
+                        return normalizeBdPhone(value) == null
+                            ? 'সঠিক মোবাইল নম্বর লেখো (যেমন ০১৭১২৩৪৫৬৭৮)'
+                            : null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Text('ইমেইল', style: dsText(14, weight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.sunken,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.lineStrong),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            LucideIcons.mail,
+                            size: 20,
+                            color: AppColors.muted,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              user.email,
+                              style: dsText(16, color: AppColors.muted),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, left: 2),
+                      child: Text(
+                        'এই ইমেইল দিয়ে লগ ইন করো, তাই বদলানো যায় না',
+                        style: dsText(12, color: AppColors.muted),
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 16),
+                      AuthErrorBox(_error!),
+                    ],
+                    const SizedBox(height: 24),
+                    AuthSubmitButton(
+                      label: 'সংরক্ষণ করো',
+                      busy: _saving,
+                      onPressed: _save,
+                    ),
                   ],
-                  const SizedBox(height: 24),
-                  AuthSubmitButton(
-                    label: 'সংরক্ষণ করো',
-                    busy: _saving,
-                    onPressed: _save,
-                  ),
-                ],
+                ),
               ),
             ),
           ),

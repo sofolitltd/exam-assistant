@@ -150,58 +150,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           'লগ ইন করে প্রস্তুতি চালিয়ে যাও',
           style: dsText(15, color: AppColors.ink2),
         ),
-        const SizedBox(height: 28),
-        Form(
-          key: _formKey,
-          child: AutofillGroup(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_error != null) ...[
-                  AuthErrorBox(_error!),
+        const SizedBox(height: 24),
+        DsCard(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+          child: Form(
+            key: _formKey,
+            child: AutofillGroup(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_error != null) ...[
+                    AuthErrorBox(_error!),
+                    const SizedBox(height: 16),
+                  ],
+                  AuthField(
+                    label: 'ইমেইল',
+                    controller: _email,
+                    hint: 'tomar@email.com',
+                    keyboardType: TextInputType.emailAddress,
+                    action: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
+                    validator: validateEmail,
+                    onSubmitted: (_) => _passwordFocus.requestFocus(),
+                  ),
                   const SizedBox(height: 16),
+                  AuthField(
+                    label: 'পাসওয়ার্ড',
+                    controller: _password,
+                    focusNode: _passwordFocus,
+                    hint: 'পাসওয়ার্ড লেখো',
+                    obscure: _obscure,
+                    action: TextInputAction.done,
+                    autofillHints: const [AutofillHints.password],
+                    validator: validatePassword,
+                    onSubmitted: (_) => _submit(),
+                    suffix: PasswordToggle(
+                      obscured: _obscure,
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  AuthSubmitButton(
+                    label: 'লগ ইন',
+                    busy: busy,
+                    onPressed: _submit,
+                  ),
+                  const SizedBox(height: 6),
+                  Center(
+                    child: AuthLink(
+                      label: 'পাসওয়ার্ড ভুলে গেছো?',
+                      // The API has no reset endpoint yet.
+                      onTap: () => showComingSoon(context, 'পাসওয়ার্ড রিসেট'),
+                    ),
+                  ),
                 ],
-                AuthField(
-                  label: 'ইমেইল',
-                  controller: _email,
-                  hint: 'tomar@email.com',
-                  keyboardType: TextInputType.emailAddress,
-                  action: TextInputAction.next,
-                  autofillHints: const [AutofillHints.email],
-                  validator: validateEmail,
-                  onSubmitted: (_) => _passwordFocus.requestFocus(),
-                ),
-                const SizedBox(height: 16),
-                AuthField(
-                  label: 'পাসওয়ার্ড',
-                  controller: _password,
-                  focusNode: _passwordFocus,
-                  hint: 'পাসওয়ার্ড লেখো',
-                  obscure: _obscure,
-                  action: TextInputAction.done,
-                  autofillHints: const [AutofillHints.password],
-                  validator: validatePassword,
-                  onSubmitted: (_) => _submit(),
-                  suffix: PasswordToggle(
-                    obscured: _obscure,
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: AuthLink(
-                    label: 'পাসওয়ার্ড ভুলে গেছো?',
-                    // The API has no reset endpoint yet.
-                    onTap: () => showComingSoon(context, 'পাসওয়ার্ড রিসেট'),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                AuthSubmitButton(
-                  label: 'লগ ইন',
-                  busy: busy,
-                  onPressed: _submit,
-                ),
-              ],
+              ),
             ),
           ),
         ),

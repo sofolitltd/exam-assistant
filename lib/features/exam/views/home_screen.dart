@@ -13,6 +13,7 @@ import '../../bcs/views/bcs_async.dart';
 import '../../bcs/views/bcs_format.dart';
 import '../../notices/views/notices_screen.dart';
 import '../../goals/views/goal_chip.dart';
+import '../../learning/widgets/today_practice_card.dart';
 import '../data/home_categories.dart';
 
 /// Hidden for now (user's choice, 2026-11-21): the "আজ" card runs on
@@ -51,6 +52,8 @@ class HomeScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                 children: [
                   const GoalChip(),
+                  const TodayPracticeCard(),
+                  const SizedBox(height: 16),
                   if (showTodaySection) ...[
                     const SectionLabel('আজ'),
                     const SizedBox(height: 8),
@@ -211,8 +214,14 @@ class HomeTopBar extends StatelessWidget {
 class NoticeBell extends ConsumerWidget {
   const NoticeBell({super.key});
 
+  /// Hidden until notices can be written from the admin console; until then
+  /// the notices list is always empty. The `/notices` route is kept.
+  static const enabled = false;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Keeps the 16px gutter that the bar's right padding (4) relies on.
+    if (!enabled) return const SizedBox(width: 12);
     final unread = ref.watch(noticesUnreadProvider);
     return IconButton(
       tooltip: 'নোটিশ',

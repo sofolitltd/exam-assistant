@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/ds.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../learning/controllers/learning_providers.dart';
 import '../data/bcs_api.dart';
 import '../data/bcs_models.dart';
 import '../data/bcs_sample_data.dart';
@@ -181,6 +182,11 @@ class _CompetitionScreenState extends ConsumerState<_CompetitionBody> {
         wrong = (result['wrongCount'] as num? ?? wrong).toInt();
         ref.invalidate(bcsMyResultsProvider);
         ref.invalidate(bcsMistakeIdsProvider(examId));
+        if (mounted) {
+          refreshLearningData(
+            ProviderScope.containerOf(context, listen: false),
+          );
+        }
       } catch (_) {
         saveFailed = true;
       }

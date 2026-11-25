@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/ds.dart';
+import '../../learning/controllers/learning_providers.dart';
 import '../data/bcs_api.dart';
 import '../data/bcs_models.dart';
 import '../data/bcs_sample_data.dart';
@@ -329,6 +330,10 @@ class _CompletedEdition extends ConsumerWidget {
       );
     }
 
+    final practice = edition.examId == null
+        ? null
+        : ref.watch(examPracticeProgressProvider).value?[edition.examId];
+
     Future<void> openMode(PaperMode mode) async {
       final choice = await showModeSheet(
         context,
@@ -356,13 +361,16 @@ class _CompletedEdition extends ConsumerWidget {
               modeRow(
                 icon: LucideIcons.headphones,
                 title: 'পড়ো ও শোনো',
-                subtitle: 'উত্তরসহ প্রশ্ন · বিষয়/topic বেছে নাও',
+                subtitle: 'উত্তরসহ প্রশ্ন · বিষয়/টপিক বেছে নাও',
                 onTap: () => openMode(PaperMode.read),
               ),
               modeRow(
                 icon: LucideIcons.pencilLine,
                 title: 'অনুশীলন',
-                subtitle: 'নিজে দাগাও, সাথে সাথে ঠিক/ভুল · সময় নেই',
+                subtitle: practice == null || practice.answered == 0
+                    ? 'নিজে দাগাও, সাথে সাথে ঠিক/ভুল · সময় নেই'
+                    : '${bn(practice.answered)}/${bn(practice.total)} করা · '
+                          'ঠিক ${bn((practice.correct * 100 / practice.answered).round())}%',
                 onTap: () => openMode(PaperMode.practice),
               ),
               modeRow(
@@ -403,7 +411,7 @@ class _CompletedEdition extends ConsumerWidget {
             children: [
               InfoTile(
                 title: 'বিশ্লেষণ',
-                subtitle: 'কোন topic বেশি, কঠিন প্রশ্ন',
+                subtitle: 'কোন টপিক বেশি, কঠিন প্রশ্ন',
                 onTap: () => context.push('/bcs/$n/analysis'),
               ),
               InfoTile(
@@ -448,7 +456,7 @@ class _CompletedEdition extends ConsumerWidget {
               ),
               InfoTile(
                 title: 'প্রশ্ন খোঁজো',
-                subtitle: 'শব্দ বা topic দিয়ে',
+                subtitle: 'শব্দ বা টপিক দিয়ে',
                 onTap: () => context.push('/bcs/pyq?bcs=$n'),
               ),
             ],

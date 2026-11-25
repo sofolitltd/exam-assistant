@@ -114,12 +114,23 @@ class MistakeQuestion {
   final QuestionModel question;
   final String? selectedKey;
 
-  const MistakeQuestion({required this.question, required this.selectedKey});
+  /// Where the latest (wrong) answer was given: `exam` or `practice`.
+  final String mode;
+  final int? subjectId;
+
+  const MistakeQuestion({
+    required this.question,
+    required this.selectedKey,
+    this.mode = 'exam',
+    this.subjectId,
+  });
 
   factory MistakeQuestion.fromJson(Map<String, dynamic> json) =>
       MistakeQuestion(
         question: QuestionModel.fromMap(json, json['id'] as String? ?? ''),
         selectedKey: json['selectedKey'] as String?,
+        mode: json['mode'] as String? ?? 'exam',
+        subjectId: (json['subjectId'] as num?)?.toInt(),
       );
 }
 

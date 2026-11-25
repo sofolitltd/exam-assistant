@@ -472,26 +472,30 @@ class DsSegmented<T> extends StatelessWidget {
               boxShadow: selected ? AppShadows.segment : null,
             ),
             alignment: Alignment.center,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (item.$3 != null) ...[
-                  Icon(
-                    item.$3,
-                    size: 16,
-                    color: selected ? AppColors.ink : AppColors.ink2,
+            // On a narrow phone a long label shrinks instead of overflowing.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (item.$3 != null) ...[
+                    Icon(
+                      item.$3,
+                      size: 16,
+                      color: selected ? AppColors.ink : AppColors.ink2,
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(
+                    item.$2,
+                    style: dsText(
+                      fontSize,
+                      weight: selected ? FontWeight.w600 : FontWeight.w400,
+                      color: selected ? AppColors.ink : AppColors.ink2,
+                    ),
                   ),
-                  const SizedBox(width: 6),
                 ],
-                Text(
-                  item.$2,
-                  style: dsText(
-                    fontSize,
-                    weight: selected ? FontWeight.w600 : FontWeight.w400,
-                    color: selected ? AppColors.ink : AppColors.ink2,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

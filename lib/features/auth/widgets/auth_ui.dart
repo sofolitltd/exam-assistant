@@ -200,7 +200,14 @@ class AuthField extends StatelessWidget {
               horizontal: 12,
               vertical: 14,
             ),
-            prefixIcon: prefix,
+            // 12 before the icon, 12 (contentPadding) after it: same as the
+            // read-only email row on the edit profile screen.
+            prefixIcon: prefix == null
+                ? null
+                : Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: prefix,
+                  ),
             prefixIconConstraints: const BoxConstraints(minHeight: 48),
             suffixIcon: suffix,
             suffixIconConstraints: const BoxConstraints(

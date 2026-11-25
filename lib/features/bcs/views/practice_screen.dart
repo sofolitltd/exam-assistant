@@ -8,6 +8,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/ds.dart';
 import '../../exam/services/question_tts_service.dart';
+import '../../learning/controllers/learning_providers.dart';
+import '../../learning/data/practice_models.dart';
+import '../../learning/data/practice_recorder.dart';
 import '../data/bcs_models.dart';
 import '../data/bcs_api.dart';
 import 'bcs_async.dart';
@@ -57,10 +60,18 @@ class PracticeScreen extends ConsumerWidget {
               builder: (_) => const SizedBox(),
             );
           }
-          return _PracticeBody(
-            number: number,
-            selection: selection,
+          final topic = selection.topicId == 'all'
+              ? ''
+              : ' · ${selection.topicLabel}';
+          return PracticeRunScreen(
+            title: '${bnOrdinal(number)} · অনুশীলন',
+            subtitle: selectionSubtitle(selection, questions.length),
             questions: questions,
+            target: PracticeTarget(
+              source: 'paper',
+              examId: paper.examId,
+              label: '${editionName(number)} · ${selection.subjectLabel}$topic',
+            ),
           );
         },
       ),
@@ -68,39 +79,72 @@ class PracticeScreen extends ConsumerWidget {
   }
 }
 
-class _PracticeBody extends ConsumerStatefulWidget {
-  final int number;
-  final PaperSelection selection;
+/// One practice sitting over [questions]: tap an option, see right/wrong
+/// and the explanation at once. Every answer is saved as it is given (see
+/// [PracticeRecorder]), so it counts in আমার ভুল, রিভিশন and the stats.
+/// Used by paper practice, topic practice and mistake practice.
+class PracticeRunScreen extends ConsumerStatefulWidget {
+  final String title;
+  final String subtitle;
   final List<PaperQuestion> questions;
+  final PracticeTarget target;
 
-  const _PracticeBody({
-    required this.number,
-    required this.selection,
+  const PracticeRunScreen({
+    required this.title,
+    required this.subtitle,
     required this.questions,
+    required this.target,
+    super.key,
   });
 
   @override
-  ConsumerState<_PracticeBody> createState() => _PracticeScreenState();
+  ConsumerState<PracticeRunScreen> createState() => _PracticeScreenState();
 }
 
-class _PracticeScreenState extends ConsumerState<_PracticeBody> {
+class _PracticeScreenState extends ConsumerState<PracticeRunScreen> {
   late final List<PaperQuestion> _questions = widget.questions;
   late final QuestionTtsService _tts;
+  late final PracticeRecorder _recorder;
+  late final ProviderContainer _container;
   final Map<int, String> _answers = {};
   bool _single = false;
   int _cur = 0;
+  DateTime _shownAt = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _tts = ref.read(questionTtsServiceProvider);
+    _recorder = ref.read(practiceRecorderFactoryProvider)(widget.target);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _container = ProviderScope.containerOf(context, listen: false);
   }
 
   @override
   void dispose() {
     _tts.stop();
+    // Leaving early still keeps what was answered: send anything queued,
+    // then reload the screens that show answers.
+    final container = _container;
+    if (_answers.isNotEmpty) {
+      _recorder.flush().whenComplete(() => _refresh(container));
+    }
     super.dispose();
   }
+
+  static void _refresh(ProviderContainer c) {
+    refreshLearningData(c);
+    c.invalidate(bcsMistakeIdsProvider);
+  }
+
+  void _go(int i) => setState(() {
+    _cur = i;
+    _shownAt = DateTime.now();
+  });
 
   int get _right => _answers.entries
       .where((e) => _questions[e.key].question.correctOption == e.value)
@@ -109,6 +153,13 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
   void _pick(int i, String key) {
     if (_answers.containsKey(i)) return;
     setState(() => _answers[i] = key);
+    // Time is only meaningful one question at a time.
+    final ms = DateTime.now().difference(_shownAt).inMilliseconds;
+    _recorder.record(
+      _questions[i].question.id,
+      key,
+      timeSpentMs: _single && i == _cur && ms < 10 * 60 * 1000 ? ms : null,
+    );
   }
 
   @override
@@ -144,7 +195,9 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${bnOrdinal(widget.number)} · অনুশীলন',
+                              widget.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: dsText(
                                 16,
                                 weight: FontWeight.w700,
@@ -152,7 +205,9 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
                               ),
                             ),
                             Text(
-                              selectionSubtitle(widget.selection, total),
+                              widget.subtitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: dsText(12, color: AppColors.muted),
                             ),
                           ],
@@ -187,7 +242,10 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: DsSegmented<bool>(
                       value: _single,
-                      onChanged: (v) => setState(() => _single = v),
+                      onChanged: (v) => setState(() {
+                        _single = v;
+                        _shownAt = DateTime.now();
+                      }),
                       items: const [
                         (true, 'একটা একটা করে', LucideIcons.square),
                         (false, 'তালিকা', LucideIcons.list),
@@ -252,7 +310,7 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
               label: 'আগের',
               height: 48,
               fontSize: 15,
-              onPressed: _cur == 0 ? null : () => setState(() => _cur--),
+              onPressed: _cur == 0 ? null : () => _go(_cur - 1),
             ),
           ),
           const SizedBox(width: 8),
@@ -265,7 +323,7 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
                   ? 'পরের প্রশ্ন'
                   : 'বাদ দাও',
               height: 48,
-              onPressed: last ? _finish : () => setState(() => _cur++),
+              onPressed: last ? _finish : () => _go(_cur + 1),
             ),
           ),
         ],
@@ -274,26 +332,41 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
   }
 
   Future<void> _finish() async {
+    if (_answers.isEmpty) {
+      context.pop();
+      return;
+    }
     final right = _right;
     final wrong = _answers.length - right;
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('অনুশীলন শেষ', style: dsText(18, weight: FontWeight.w700)),
-        content: Text(
-          'ঠিক ${bn(right)} · ভুল ${bn(wrong)} · বাদ ${bn(_questions.length - _answers.length)}\n'
-          'ভুলগুলো "আমার ভুল"-এ রাখা হয়েছে।',
-          style: dsText(14, height: 1.6),
+    final skipped = _questions.length - _answers.length;
+    var saved = await _recorder.flush();
+    if (!mounted) return;
+    while (true) {
+      final action = await showDialog<String>(
+        context: context,
+        builder: (ctx) => _FinishDialog(
+          right: right,
+          wrong: wrong,
+          skipped: skipped,
+          saved: saved,
+          // Retrying mistakes already returns to the mistakes list.
+          offerMistakes: widget.target.source != 'mistakes',
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('ঠিক আছে'),
-          ),
-        ],
-      ),
-    );
-    if (mounted) context.pop();
+      );
+      if (!mounted) return;
+      if (action == 'retry') {
+        saved = await _recorder.flush();
+        if (!mounted) return;
+        continue;
+      }
+      _refresh(_container);
+      if (action == 'mistakes') {
+        context.pushReplacement('/practice/mistakes?mode=practice');
+      } else {
+        context.pop();
+      }
+      return;
+    }
   }
 
   OptionState _state(int i, String key) {
@@ -473,6 +546,97 @@ class _PracticeScreenState extends ConsumerState<_PracticeBody> {
           ),
         );
       },
+    );
+  }
+}
+
+class _FinishDialog extends StatelessWidget {
+  final int right;
+  final int wrong;
+  final int skipped;
+  final bool saved;
+  final bool offerMistakes;
+
+  const _FinishDialog({
+    required this.right,
+    required this.wrong,
+    required this.skipped,
+    required this.saved,
+    required this.offerMistakes,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final answered = right + wrong;
+    final note = !saved
+        ? 'সব উত্তর সেভ হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করো, নইলে এগুলো তোমার হিসাবে আসবে না।'
+        : wrong > 0
+        ? 'ভুলগুলো "আমার ভুল"-এ রাখা হয়েছে, রিভিশনেও আসবে। পরে ঠিক করলে তালিকা থেকে সরে যাবে।'
+        : 'সব ঠিক! অনুশীলনের হিসাবে যোগ হয়েছে।';
+    return AlertDialog(
+      backgroundColor: AppColors.paper,
+      title: Text('অনুশীলন শেষ', style: dsText(18, weight: FontWeight.w700)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: StatBox(
+                  label: 'ঠিক',
+                  value: bn(right),
+                  valueColor: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: StatBox(
+                  label: 'ভুল',
+                  value: bn(wrong),
+                  valueColor: AppColors.danger,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: StatBox(label: 'বাদ', value: bn(skipped)),
+              ),
+            ],
+          ),
+          if (answered > 0) ...[
+            const SizedBox(height: 10),
+            Text(
+              'নির্ভুলতা ${bn((right * 100 / answered).round())}%',
+              style: dsText(14, weight: FontWeight.w600),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            note,
+            style: dsText(
+              13,
+              height: 1.5,
+              color: saved ? AppColors.ink2 : AppColors.danger,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        if (!saved)
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'retry'),
+            child: const Text('আবার চেষ্টা'),
+          )
+        else if (wrong > 0 && offerMistakes)
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'mistakes'),
+            child: const Text('ভুলগুলো দেখো'),
+          ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, 'done'),
+          child: Text(saved ? 'ঠিক আছে' : 'বাদ দাও'),
+        ),
+      ],
     );
   }
 }

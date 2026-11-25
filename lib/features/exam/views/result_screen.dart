@@ -7,6 +7,7 @@ import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/responsive_wrapper.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../dashboard/controllers/stats_controller.dart';
+import '../../learning/controllers/learning_providers.dart';
 import '../../learning/data/learning_models.dart';
 import '../../learning/widgets/review_question_card.dart';
 import '../controllers/exam_controller.dart';
@@ -65,6 +66,9 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           .submitExamResult(examId: exam.examId, answers: answers);
       ref.invalidate(userExamResultsProvider);
       ref.invalidate(userProfileProvider);
+      if (mounted) {
+        refreshLearningData(ProviderScope.containerOf(context, listen: false));
+      }
       if (!mounted) return;
       final submission = ExamSubmission.fromJson(json);
       setState(() => _submission = submission);

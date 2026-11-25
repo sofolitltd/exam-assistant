@@ -21,6 +21,7 @@ import '../../features/auth/views/profile_setup_screen.dart';
 import '../../features/dashboard/views/leaderboard_view.dart';
 import '../../features/dashboard/views/main_navigation_hub.dart';
 import '../../features/dashboard/views/help_screen.dart';
+import '../../features/dashboard/views/sources_screen.dart';
 import '../../features/dashboard/views/notification_settings_screen.dart';
 import '../../features/dashboard/views/profile_view.dart';
 import '../../features/dashboard/views/results_history_screen.dart';
@@ -204,6 +205,13 @@ final GoRouter appRouter = GoRouter(
                 child: const HelpScreen(),
               ),
             ),
+            GoRoute(
+              path: 'sources',
+              pageBuilder: (context, state) => NoTransitionPage(
+                key: state.pageKey,
+                child: const SourcesScreen(),
+              ),
+            ),
           ],
         ),
         GoRoute(
@@ -284,7 +292,18 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => MistakesPracticeScreen(
         examId: state.uri.queryParameters['examId'],
         title: state.uri.queryParameters['title'],
+        mode: state.uri.queryParameters['mode'],
       ),
+    ),
+    // A practice sitting over a given question list (topic, mistakes).
+    GoRoute(
+      path: '/practice/run',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final run = state.extra;
+        if (run is! PracticeRunScreen) return const AuthGate();
+        return run;
+      },
     ),
     GoRoute(
       path: '/listen',

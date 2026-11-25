@@ -4,13 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/bangla_digits.dart';
 import '../../../core/widgets/ds.dart';
 import '../../bcs/data/bcs_api.dart';
 import '../../bcs/views/bcs_format.dart';
 import '../../exam/views/home_screen.dart';
 import '../../goals/views/goal_chip.dart';
-import '../controllers/learning_providers.dart';
+import '../widgets/today_practice_card.dart';
 
 /// অনুশীলন tab: one main task (mistakes to clear) and every practice tool.
 class PracticeHubScreen extends ConsumerWidget {
@@ -18,19 +17,8 @@ class PracticeHubScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mistakes = ref.watch(mistakesProvider(null));
     final runningNumber = ref.watch(bcsRunningNumberProvider);
     final papers = ref.watch(bcsPapersReadyProvider).value ?? const [];
-    final summary = ref.watch(dueReviewsProvider).value?.summary;
-    final dueText = summary == null
-        ? 'ভুল প্রশ্ন নির্দিষ্ট ব্যবধানে আবার দেখো'
-        : summary.due == 0
-        ? 'আজ কিছু বাকি নেই'
-        : '${bn(summary.due)}টি প্রশ্ন আজ আবার দেখার সময়';
-    final mistakesText = mistakes.items.isEmpty
-        ? (mistakes.isLoading ? 'লোড হচ্ছে…' : 'কোনো ভুল বাকি নেই। দারুণ!')
-        : '${bn(mistakes.items.length)}${mistakes.hasMore ? '+' : ''}টি '
-              'প্রশ্ন আবার দেওয়া বাকি। ঠিক করলে তালিকা থেকে সরে যাবে।';
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
@@ -60,57 +48,8 @@ class PracticeHubScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                 children: [
                   const GoalChip(),
-                  const SectionLabel('আগে এটা'),
-                  DsCard(
-                    onTap: () => context.push('/practice/review'),
-                    child: Row(
-                      children: [
-                        const IconSquare(LucideIcons.repeat),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'আজকের রিভিশন',
-                                style: dsText(15, weight: FontWeight.w600),
-                              ),
-                              Text(
-                                dueText,
-                                style: dsText(12, color: AppColors.muted),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          LucideIcons.chevronRight,
-                          size: 18,
-                          color: AppColors.muted,
-                        ),
-                      ],
-                    ),
-                  ),
-                  DsCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'আমার ভুল',
-                          style: dsText(18, weight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          mistakesText,
-                          style: dsText(13, color: AppColors.muted),
-                        ),
-                        const SizedBox(height: 14),
-                        DsButton(
-                          label: 'ভুলগুলো আবার দাও',
-                          onPressed: () => context.push('/practice/mistakes'),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SectionLabel('আজ'),
+                  const TodayPracticeCard(),
                   DsCard(
                     onTap: () => context.push('/study-first'),
                     child: Row(
@@ -151,7 +90,7 @@ class PracticeHubScreen extends ConsumerWidget {
                         context,
                         LucideIcons.bookOpen,
                         'বিষয়ভিত্তিক বিগত প্রশ্ন',
-                        'topic ধরে ধরে',
+                        'টপিক ধরে পড়ো, নিজে দাগিয়ে অনুশীলন করো',
                         () => context.push('/bcs/pyq'),
                       ),
                       _row(

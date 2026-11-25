@@ -1,3 +1,4 @@
+import '../../learning/data/practice_models.dart';
 import '../../learning/data/saved_questions.dart';
 import '../../../core/widgets/answer_caveat.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ import '../data/bcs_api.dart';
 import '../data/bcs_models.dart';
 import 'bcs_async.dart';
 import 'bcs_format.dart';
+import 'practice_screen.dart';
 
 /// Parses the `bcs` query param ("44,45") into the edition filter.
 Set<int> parsePyqFilter(String? raw) => {
@@ -124,7 +126,7 @@ class _SubjectPyqScreenState extends ConsumerState<SubjectPyqScreen> {
       body: Column(
         children: [
           _SearchBar(
-            hint: 'প্রশ্ন বা topic খোঁজো',
+            hint: 'প্রশ্ন বা টপিক খোঁজো',
             onChanged: (v) => setState(() => _query = v.trim()),
             editions: full.editions,
             filter: _filter,
@@ -220,7 +222,7 @@ class _PyqSubjectScreenState extends ConsumerState<PyqSubjectScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        '${bn(all.length)}টি topic · '
+                        '${bn(all.length)}টি টপিক · '
                         '${bn(subject?.questions ?? 0)} প্রশ্ন',
                         style: dsText(
                           13,
@@ -310,6 +312,35 @@ class _PyqTopicQuestionsScreenState
     });
   }
 
+  /// One entry per question (a question can repeat across papers), with
+  /// every paper it appeared in.
+  static List<PaperQuestion> _practiceQuestions(List<PyqItem> items) {
+    final byId = <String, (QuestionModel, List<int>)>{};
+    for (final i in items) {
+      byId
+          .putIfAbsent(i.question.id, () => (i.question, <int>[]))
+          .$2
+          .add(i.edition);
+    }
+    return [
+      for (final e in byId.values)
+        PaperQuestion(e.$1, appearedIn: e.$2..sort((a, b) => b - a)),
+    ];
+  }
+
+  void _practice(List<PyqItem> items) {
+    final questions = _practiceQuestions(items);
+    context.push(
+      '/practice/run',
+      extra: PracticeRunScreen(
+        title: '${widget.title} · অনুশীলন',
+        subtitle: '${bn(questions.length)} প্রশ্ন · বিগত বিসিএস',
+        questions: questions,
+        target: PracticeTarget(source: 'topic', label: widget.title),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final index = ref.watch(bcsPyqIndexProvider);
@@ -347,6 +378,12 @@ class _PyqTopicQuestionsScreenState
                     onActiveIndexChanged: _onActive,
                   ),
           ),
+          bottomNavigationBar: items.isEmpty
+              ? null
+              : _PracticeBar(
+                  count: _practiceQuestions(items).length,
+                  onPressed: () => _practice(items),
+                ),
           body: items.isEmpty
               ? Center(
                   child: Text(
@@ -723,7 +760,7 @@ class _SubjectCard extends StatelessWidget {
           const Spacer(),
           const SizedBox(height: 8),
           Text(
-            '${bn(subject.topics.length)}টি topic · ${bn(subject.questions)} প্রশ্ন',
+            '${bn(subject.topics.length)}টি টপিক · ${bn(subject.questions)} প্রশ্ন',
             style: dsText(12, color: AppColors.muted),
           ),
         ],
@@ -895,6 +932,33 @@ class _TopicRow extends StatelessWidget {
               color: AppColors.muted,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Pinned under a topic's questions: start practising them.
+class _PracticeBar extends StatelessWidget {
+  final int count;
+  final VoidCallback onPressed;
+
+  const _PracticeBar({required this.count, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.paper,
+        border: Border(top: BorderSide(color: AppColors.line)),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: SafeArea(
+        top: false,
+        child: DsButton(
+          label: 'নিজে দাগিয়ে অনুশীলন করো · ${bn(count)}টি',
+          height: 48,
+          onPressed: onPressed,
         ),
       ),
     );

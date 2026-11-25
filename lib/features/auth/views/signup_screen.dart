@@ -119,93 +119,98 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
         const SizedBox(height: 4),
         Text('১ মিনিটেই শুরু করো', style: dsText(15, color: AppColors.ink2)),
         const SizedBox(height: 22),
-        Form(
-          key: _formKey,
-          child: AutofillGroup(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_error != null) ...[
-                  AuthErrorBox(_error!),
-                  const SizedBox(height: 14),
-                ],
-                AuthField(
-                  label: 'তোমার নাম',
-                  controller: _name,
-                  hint: 'পুরো নাম',
-                  action: TextInputAction.next,
-                  capitalization: TextCapitalization.words,
-                  autofillHints: const [AutofillHints.name],
-                  maxLength: 200,
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'নাম লেখো' : null,
-                  onSubmitted: (_) => _phoneFocus.requestFocus(),
-                ),
-                const SizedBox(height: 14),
-                AuthField(
-                  label: 'মোবাইল নম্বর',
-                  controller: _phone,
-                  focusNode: _phoneFocus,
-                  hint: '০১XXXXXXXXX',
-                  helper: 'যোগাযোগ ও নোটিশের জন্য, লগ ইনে লাগবে না',
-                  keyboardType: TextInputType.phone,
-                  action: TextInputAction.next,
-                  autofillHints: const [AutofillHints.telephoneNumberNational],
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'মোবাইল নম্বর লেখো';
-                    }
-                    if (normalizeBdPhone(v) == null) {
-                      return '০১ দিয়ে শুরু ১১ সংখ্যার নম্বর লেখো';
-                    }
-                    return null;
-                  },
-                  onSubmitted: (_) => _emailFocus.requestFocus(),
-                ),
-                const SizedBox(height: 10),
-                const _Divider(label: 'লগ ইনের তথ্য'),
-                const SizedBox(height: 10),
-                AuthField(
-                  label: 'ইমেইল',
-                  controller: _email,
-                  focusNode: _emailFocus,
-                  hint: 'tomar@email.com',
-                  keyboardType: TextInputType.emailAddress,
-                  action: TextInputAction.next,
-                  autofillHints: const [AutofillHints.email],
-                  validator: validateEmail,
-                  onSubmitted: (_) => _passwordFocus.requestFocus(),
-                ),
-                const SizedBox(height: 14),
-                AuthField(
-                  label: 'পাসওয়ার্ড',
-                  controller: _password,
-                  focusNode: _passwordFocus,
-                  hint: 'কমপক্ষে ৮ অক্ষর',
-                  obscure: _obscure,
-                  action: TextInputAction.done,
-                  autofillHints: const [AutofillHints.newPassword],
-                  validator: (v) => validatePassword(v, isNew: true),
-                  suffix: PasswordToggle(
-                    obscured: _obscure,
-                    onPressed: () => setState(() => _obscure = !_obscure),
+        DsCard(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+          child: Form(
+            key: _formKey,
+            child: AutofillGroup(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_error != null) ...[
+                    AuthErrorBox(_error!),
+                    const SizedBox(height: 14),
+                  ],
+                  AuthField(
+                    label: 'তোমার নাম',
+                    controller: _name,
+                    hint: 'পুরো নাম',
+                    action: TextInputAction.next,
+                    capitalization: TextCapitalization.words,
+                    autofillHints: const [AutofillHints.name],
+                    maxLength: 200,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'নাম লেখো' : null,
+                    onSubmitted: (_) => _phoneFocus.requestFocus(),
                   ),
-                ),
-                const SizedBox(height: 20),
-                const Divider(height: 1, color: AppColors.lineStrong),
-                const SizedBox(height: 14),
-                _AgreeRow(
-                  value: _agree,
-                  onChanged: (v) => setState(() => _agree = v),
-                ),
-                const SizedBox(height: 10),
-                AuthSubmitButton(
-                  label: 'অ্যাকাউন্ট খোলো',
-                  busy: busy,
-                  enabled: _agree,
-                  onPressed: _submit,
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  AuthField(
+                    label: 'মোবাইল নম্বর',
+                    controller: _phone,
+                    focusNode: _phoneFocus,
+                    hint: '০১XXXXXXXXX',
+                    helper: 'যোগাযোগ ও নোটিশের জন্য, লগ ইনে লাগবে না',
+                    keyboardType: TextInputType.phone,
+                    action: TextInputAction.next,
+                    autofillHints: const [
+                      AutofillHints.telephoneNumberNational,
+                    ],
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'মোবাইল নম্বর লেখো';
+                      }
+                      if (normalizeBdPhone(v) == null) {
+                        return '০১ দিয়ে শুরু ১১ সংখ্যার নম্বর লেখো';
+                      }
+                      return null;
+                    },
+                    onSubmitted: (_) => _emailFocus.requestFocus(),
+                  ),
+                  const SizedBox(height: 10),
+                  const _Divider(label: 'লগ ইনের তথ্য'),
+                  const SizedBox(height: 10),
+                  AuthField(
+                    label: 'ইমেইল',
+                    controller: _email,
+                    focusNode: _emailFocus,
+                    hint: 'tomar@email.com',
+                    keyboardType: TextInputType.emailAddress,
+                    action: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
+                    validator: validateEmail,
+                    onSubmitted: (_) => _passwordFocus.requestFocus(),
+                  ),
+                  const SizedBox(height: 14),
+                  AuthField(
+                    label: 'পাসওয়ার্ড',
+                    controller: _password,
+                    focusNode: _passwordFocus,
+                    hint: 'কমপক্ষে ৮ অক্ষর',
+                    obscure: _obscure,
+                    action: TextInputAction.done,
+                    autofillHints: const [AutofillHints.newPassword],
+                    validator: (v) => validatePassword(v, isNew: true),
+                    suffix: PasswordToggle(
+                      obscured: _obscure,
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Divider(height: 1, color: AppColors.lineStrong),
+                  const SizedBox(height: 14),
+                  _AgreeRow(
+                    value: _agree,
+                    onChanged: (v) => setState(() => _agree = v),
+                  ),
+                  const SizedBox(height: 10),
+                  AuthSubmitButton(
+                    label: 'অ্যাকাউন্ট খোলো',
+                    busy: busy,
+                    enabled: _agree,
+                    onPressed: _submit,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

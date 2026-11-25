@@ -86,6 +86,5 @@ class ExamLeaderboardScreen extends ConsumerWidget {
 }
 
 /// Up to two decimals (negative marking gives .25 / .75), trailing zeros cut.
-String _score(double v) => bn(
-  v.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), ''),
-);
+String _score(double v) =>
+    bn(v.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), ''));

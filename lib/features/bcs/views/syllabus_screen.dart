@@ -180,7 +180,7 @@ class _SyllabusBodyState extends ConsumerState<_SyllabusBody> {
           Text.rich(
             TextSpan(
               text:
-                  'কোনো বিষয়ে চাপলে সেই বিষয়ের topic আর বিগত প্রশ্ন খুলবে। '
+                  'কোনো বিষয়ে চাপলে সেই বিষয়ের টপিক আর বিগত প্রশ্ন খুলবে। '
                   'সিলেবাসের মূল PDF: ',
               children: [
                 TextSpan(
